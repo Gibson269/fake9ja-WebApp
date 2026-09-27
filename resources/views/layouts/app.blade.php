@@ -1,9 +1,26 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" x-data="{ darkMode: localStorage.getItem('fake9ja_theme') === 'dark', mobileMenu: false }" :class="{ 'dark': darkMode }">
+<html lang="en" class="scroll-smooth" x-data="appThemeManager()" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Immediate synchronous theme detection to prevent any flash of light mode (FOUC) -->
+    <script>
+        (function() {
+            try {
+                var saved = localStorage.getItem('fake9ja_theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                // Default to dark mode or user preference
+                var isDark = saved === 'dark' || (!saved && (prefersDark || true));
+                if (isDark && saved !== 'light') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <title>@yield('title', 'Fake9ja | Nigeria\'s Free Citizen Counterfeit Detection & Consumer Protection Radar')</title>
     <meta name="description" content="Report and track fake products, counterfeit medicines, cosmetics, and adulterated goods in Nigerian markets. 100% Free public consumer protection intelligence.">
 
@@ -52,6 +69,13 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        html.theme-transitioning,
+        html.theme-transitioning *,
+        html.theme-transitioning *:before,
+        html.theme-transitioning *:after {
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease !important;
+            transition-delay: 0s !important;
+        }
         .glass-panel {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(16px);
@@ -75,6 +99,28 @@
             100% { transform: rotate(360deg); }
         }
     </style>
+    <script>
+        function appThemeManager() {
+            return {
+                darkMode: document.documentElement.classList.contains('dark'),
+                mobileMenu: false,
+                toggleTheme() {
+                    document.documentElement.classList.add('theme-transitioning');
+                    this.darkMode = !this.darkMode;
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                        try { localStorage.setItem('fake9ja_theme', 'dark'); } catch(e){}
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        try { localStorage.setItem('fake9ja_theme', 'light'); } catch(e){}
+                    }
+                    setTimeout(() => {
+                        document.documentElement.classList.remove('theme-transitioning');
+                    }, 300);
+                }
+            };
+        }
+    </script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen flex flex-col transition-colors duration-300">
 
@@ -144,15 +190,15 @@
             <!-- Actions (Theme Toggle & Report Button) -->
             <div class="flex items-center gap-3">
                 <!-- Theme Switcher -->
-                <button @click="darkMode = !darkMode; localStorage.setItem('fake9ja_theme', darkMode ? 'dark' : 'light')" 
+                <button type="button" @click="toggleTheme()" 
                         class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
                         title="Toggle Dark/Light Mode">
-                    <template x-if="!darkMode">
+                    <span x-show="!darkMode" class="flex items-center">
                         <i data-lucide="moon" class="w-4 h-4"></i>
-                    </template>
-                    <template x-if="darkMode">
+                    </span>
+                    <span x-show="darkMode" class="flex items-center" x-cloak>
                         <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
-                    </template>
+                    </span>
                 </button>
 
                 <!-- Primary Report Button (100% Free) -->

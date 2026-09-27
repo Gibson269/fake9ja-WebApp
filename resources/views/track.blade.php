@@ -68,27 +68,79 @@
                 </div>
             </div>
 
-            <!-- Dynamic 4-Stage Status Pipeline -->
+            <!-- Dynamic 4-Stage Status Pipeline (Read-Only User Progress View) -->
             @php
                 $stages = [
-                    ['title' => 'Incident Logged', 'desc' => 'Logged into Fake9ja registry', 'completed' => true],
-                    ['title' => 'Forensic Triage', 'desc' => 'Batch & packaging comparison', 'completed' => in_array($report->status, ['under_review', 'verified_fake', 'verified_original', 'escalated'])],
-                    ['title' => 'Lab / Regulatory Cross-Check', 'desc' => 'NAFDAC/SON coordination', 'completed' => in_array($report->status, ['verified_fake', 'verified_original', 'escalated'])],
-                    ['title' => 'Final Determination', 'desc' => 'Public market advisory bulletin', 'completed' => in_array($report->status, ['verified_fake', 'verified_original', 'escalated'])],
+                    [
+                        'num' => 1,
+                        'title' => 'Incident Logged',
+                        'desc' => 'Logged into Fake9ja registry',
+                        'completed' => true,
+                        'active' => $report->status === 'received',
+                    ],
+                    [
+                        'num' => 2,
+                        'title' => 'Forensic Triage',
+                        'desc' => 'Batch & packaging comparison',
+                        'completed' => in_array($report->status, ['under_review', 'verified_fake', 'verified_original', 'escalated']),
+                        'active' => $report->status === 'under_review',
+                    ],
+                    [
+                        'num' => 3,
+                        'title' => 'Lab / Regulatory Cross-Check',
+                        'desc' => 'NAFDAC/SON coordination',
+                        'completed' => in_array($report->status, ['escalated', 'verified_fake', 'verified_original']),
+                        'active' => $report->status === 'escalated',
+                    ],
+                    [
+                        'num' => 4,
+                        'title' => 'Final Determination',
+                        'desc' => 'Public market advisory bulletin',
+                        'completed' => in_array($report->status, ['verified_fake', 'verified_original']),
+                        'active' => in_array($report->status, ['verified_fake', 'verified_original']),
+                    ],
                 ];
             @endphp
             <div>
-                <h3 class="font-heading font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider mb-4">
-                    Investigation Progression
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    @foreach($stages as $idx => $st)
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-heading font-bold text-sm text-slate-900 dark:text-white uppercase tracking-wider">
+                        Investigation Progression
+                    </h3>
+                    <span class="text-xs text-slate-400">
+                        Updated in real-time by Chief Inspector Desk
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    @foreach($stages as $st)
                     <div class="p-4 rounded-2xl border transition {{ $st['completed'] ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-200' : 'bg-slate-100/50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 text-slate-400 opacity-60' }}">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center {{ $st['completed'] ? 'bg-emerald-600 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-600' }}">
-                                {{ $idx + 1 }}
-                            </span>
-                            <span class="font-bold text-xs text-slate-900 dark:text-white">{{ $st['title'] }}</span>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center {{ $st['completed'] ? 'bg-emerald-600 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400' }}">
+                                    @if($st['completed'])
+                                        <i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>
+                                    @else
+                                        {{ $st['num'] }}
+                                    @endif
+                                </span>
+                                <span class="font-bold text-xs {{ $st['completed'] ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400' }}">
+                                    {{ $st['title'] }}
+                                </span>
+                            </div>
+
+                            @if($st['active'] && $st['num'] !== 4)
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-amber-500/20 text-amber-500 animate-pulse border border-amber-500/30">
+                                    Active
+                                </span>
+                            @elseif($st['completed'])
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-500">
+                                    Approved
+                                </span>
+                            @else
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-slate-200 dark:bg-slate-800 text-slate-400">
+                                    Pending
+                                </span>
+                            @endif
                         </div>
                         <p class="text-[11px] leading-tight text-slate-500 dark:text-slate-400">{{ $st['desc'] }}</p>
                     </div>

@@ -12,6 +12,7 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
+  Clock,
   Database,
   Download,
   Eye,
@@ -753,25 +754,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {/* KPI Grid */}
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {[
-                  ["Total Submissions", totalReportsCount.toString(), "100% Free Public Good", Inbox, "text-emerald-400"],
-                  ["Confirmed Fakes", verifiedFakeCount.toString(), "Flagged on Radar", ShieldAlert, "text-rose-400"],
-                  ["Pending Triage", underReviewCount.toString(), "Active Inspector Queue", Clock, "text-amber-400"],
-                  ["SLA Fast-Track", priorityCount.toString(), "WELCOME30 Priority", Zap, "text-cyan-400"],
-                ].map(([label, val, sub, Icon, colorClass]) => (
+                  { label: "Total Submissions", val: totalReportsCount.toString(), sub: "100% Free Public Good", Icon: Inbox, colorClass: "text-emerald-400" },
+                  { label: "Confirmed Fakes", val: verifiedFakeCount.toString(), sub: "Flagged on Radar", Icon: ShieldAlert, colorClass: "text-rose-400" },
+                  { label: "Pending Triage", val: underReviewCount.toString(), sub: "Active Inspector Queue", Icon: Clock, colorClass: "text-amber-400" },
+                  { label: "SLA Fast-Track", val: priorityCount.toString(), sub: "WELCOME30 Priority", Icon: Zap, colorClass: "text-cyan-400" },
+                ].map(({ label, val, sub, Icon, colorClass }) => (
                   <div
-                    key={String(label)}
+                    key={label}
                     className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 shadow-xs hover:border-slate-700 transition"
                   >
                     <div className="flex items-start justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        {String(label)}
+                        {label}
                       </span>
                       <div className="grid size-10 place-items-center rounded-2xl bg-slate-800 text-slate-200">
                         <Icon className="size-5" />
                       </div>
                     </div>
                     <strong className="mt-3 block font-display text-3xl font-black text-white">
-                      {String(val)}
+                      {val}
                     </strong>
                     <span className={`mt-1 block text-xs font-bold ${colorClass}`}>
                       {String(sub)}
@@ -890,14 +891,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Status Filter */}
                   <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-950 p-1 border border-slate-800">
-                    {[
+                    ([
                       ["all", "All Cases"],
                       ["received", "Pending"],
                       ["under_review", "In Review"],
                       ["verified_fake", "Fake"],
                       ["verified_original", "Original"],
                       ["escalated", "Escalated"],
-                    ].map(([val, label]) => (
+                    ] as const).map(([val, label]) => (
                       <button
                         key={val}
                         onClick={() => setFilterStatus(val)}
@@ -1258,11 +1259,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                     {/* Preset Imagery Quick Selectors */}
                     <div className="grid grid-cols-3 gap-2.5 mb-3">
-                      {[
+                      ([
                         ["/images/counterfeit-malaria.jpg", "Malaria Tablet Pack"],
                         ["/images/counterfeit-cosmetics.jpg", "Cosmetic Lotion Bottle"],
                         ["/images/counterfeit-oil.jpg", "Motor Oil QR Check"],
-                      ].map(([path, name]) => (
+                      ] as const).map(([path, name]) => (
                         <div
                           key={path}
                           onClick={() => {
@@ -1302,7 +1303,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="flex flex-col items-center justify-center gap-1 text-slate-400">
                         <UploadCloud className="size-6 text-rose-400" />
                         <span className="text-xs font-bold text-white">
-                          {publishFiles.length > 0 ? publishFiles[0].name : "Or click to upload custom evidence photo"}
+                          {publishFiles[0]?.name ? publishFiles[0].name : "Or click to upload custom evidence photo"}
                         </span>
                         <span className="text-[10px]">Supports PNG, JPG, WEBP up to 10MB</span>
                       </div>

@@ -13,23 +13,23 @@ export interface ReportItem {
   id: number | string;
   reference_id: string;
   product_name: string;
-  brand?: string;
+  brand?: string | undefined;
   category: string;
   state: string;
   market_address: string;
   issue_type: string;
-  details?: string;
-  purchase_price?: string;
-  reporter_contact?: string;
+  details?: string | undefined;
+  purchase_price?: string | undefined;
+  reporter_contact?: string | undefined;
   is_anonymous: boolean;
   status: "received" | "under_review" | "verified_fake" | "verified_original" | "escalated";
   risk_level: "low" | "medium" | "high";
   is_priority: boolean;
-  priority_fee_paid?: number;
-  coupon_used?: string | null;
-  media_count?: number;
-  media_urls?: string[];
-  reviewer_note?: string;
+  priority_fee_paid?: number | undefined;
+  coupon_used?: string | null | undefined;
+  media_count?: number | undefined;
+  media_urls?: string[] | undefined;
+  reviewer_note?: string | undefined;
   created_at: string;
 }
 
@@ -47,17 +47,17 @@ export interface BrandWatchSubmission {
   email: string;
   phone: string;
   tier: "starter" | "enterprise" | "custom";
-  coupon_code?: string;
-  monitored_skus?: string;
+  coupon_code?: string | undefined;
+  monitored_skus?: string | undefined;
 }
 
 export interface QuickReportData {
   product_type: string;
   purchased_location: string;
   amount_paid: string;
-  product_name?: string;
-  state?: string;
-  details?: string;
+  product_name?: string | undefined;
+  state?: string | undefined;
+  details?: string | undefined;
 }
 
 export function formatMediaUrl(url?: string): string {
@@ -302,7 +302,7 @@ export const Fake9jaAPI = {
   },
 
   // Get reports (Database + Local synced items)
-  async getReports(params?: { category?: string; status?: string; search?: string }): Promise<ReportItem[]> {
+  async getReports(params?: { category?: string | undefined; status?: string | undefined; search?: string | undefined }): Promise<ReportItem[]> {
     let serverReports: ReportItem[] = [];
     try {
       const qs = new URLSearchParams();

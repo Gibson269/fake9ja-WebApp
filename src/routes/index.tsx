@@ -908,13 +908,13 @@ function Home() {
           </Reveal>
 
           <Accordion type="single" collapsible className="w-full">
-            {[
+            ([
               ["How does Fake9ja protect my identity?", "You can submit reports 100% anonymously. We never require your real name or personal information. Your IP address is never made public, and reports are anonymized before appearing on the public incident radar."],
               ["What is the WELCOME30 coupon code for?", "The coupon code WELCOME30 gives a 30% discount on Fast-Track Priority Lab Verification (expedited 2-hour report turnaround + formal evidence dossier) and Brand Watch subscriptions for authentic product manufacturers."],
               ["Where is the submitted data stored?", "All reports and evidence are securely indexed in our database (SQLite / MySQL) and synced with the active review desk and community radar."],
               ["What are the 3 key data points needed during quick collection?", "The 3 essential data points needed when collecting fast are: Product Type (Category), Purchased Location (Market name or address), and Amount Paid for it (Price in ₦). These allow rapid classification and price anomaly detection."],
               ["Can authentic brands monitor their products?", "Yes! Authentic brand manufacturers can register on Fake9ja Brand Watch with coupon code WELCOME30 to receive continuous alerts whenever their brand name or barcode is flagged."],
-            ].map(([q, a]) => (
+            ] as const).map(([q, a]) => (
               <AccordionItem key={q} value={q} className="border-border">
                 <AccordionTrigger className="py-4 text-left font-display text-sm font-bold text-foreground hover:no-underline">
                   <span className="flex items-center gap-2.5">

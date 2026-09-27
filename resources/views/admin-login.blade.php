@@ -9,12 +9,12 @@
             <div class="size-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 mx-auto flex items-center justify-center mb-3">
                 <i data-lucide="shield-alert" class="w-6 h-6"></i>
             </div>
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2 border border-emerald-200 dark:border-emerald-800">
+            <!-- <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2 border border-emerald-200 dark:border-emerald-800">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 Restricted Admin Command Gate
-            </div>
+            </div> -->
             <h1 class="font-heading font-black text-2xl text-slate-900 dark:text-white">
-                Chief Inspector Login
+                Admin Login
             </h1>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Only verified administrators with authorized credentials can access this page.
@@ -27,14 +27,6 @@
                 <span>{{ session('error') }}</span>
             </div>
         @endif
-
-        <div class="mb-5 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
-            <span class="font-bold text-emerald-600 dark:text-emerald-400 block mb-1">Official Chief Inspector Key:</span>
-            <div class="font-mono text-[11px] text-slate-600 dark:text-slate-300">
-                <div>Email: <strong class="text-slate-900 dark:text-white">admin@fake9ja.ng</strong></div>
-                <div>Password: <strong class="text-slate-900 dark:text-white">admin123</strong></div>
-            </div>
-        </div>
 
         <form action="{{ route('admin.login.submit') }}" method="POST" class="space-y-4">
             @csrf
@@ -55,7 +47,7 @@
             </div>
 
             <button type="submit" class="w-full h-11 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white transition shadow-lg shadow-emerald-600/20 cursor-pointer mt-2">
-                Unlock Inspector Command Desk →
+                Login →
             </button>
         </form>
 

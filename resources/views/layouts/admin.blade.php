@@ -1,12 +1,25 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" x-data="{ 
-    darkMode: localStorage.getItem('fake9ja_theme') ? localStorage.getItem('fake9ja_theme') === 'dark' : true,
-    sidebarOpen: false
-}" :class="{ 'dark': darkMode }">
+<html lang="en" class="scroll-smooth" x-data="adminThemeManager()" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Immediate synchronous theme detection to prevent flash of light mode (FOUC) -->
+    <script>
+        (function() {
+            try {
+                var saved = localStorage.getItem('fake9ja_theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var isDark = saved === 'dark' || (!saved && (prefersDark || true));
+                if (isDark && saved !== 'light') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <title>@yield('title', 'Chief Inspector Command Desk | Fake9ja Admin')</title>
     <meta name="description" content="Fake9ja Chief Inspector Command & Forensic Triage Dashboard.">
 
@@ -55,6 +68,13 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        html.theme-transitioning,
+        html.theme-transitioning *,
+        html.theme-transitioning *:before,
+        html.theme-transitioning *:after {
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease !important;
+            transition-delay: 0s !important;
+        }
         .glass-panel {
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(16px);
@@ -86,6 +106,28 @@
             background: rgba(100, 116, 139, 0.7);
         }
     </style>
+    <script>
+        function adminThemeManager() {
+            return {
+                darkMode: document.documentElement.classList.contains('dark'),
+                sidebarOpen: false,
+                toggleTheme() {
+                    document.documentElement.classList.add('theme-transitioning');
+                    this.darkMode = !this.darkMode;
+                    if (this.darkMode) {
+                        document.documentElement.classList.add('dark');
+                        try { localStorage.setItem('fake9ja_theme', 'dark'); } catch(e){}
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        try { localStorage.setItem('fake9ja_theme', 'light'); } catch(e){}
+                    }
+                    setTimeout(() => {
+                        document.documentElement.classList.remove('theme-transitioning');
+                    }, 300);
+                }
+            };
+        }
+    </script>
 </head>
 <body class="bg-slate-100 dark:bg-[#070d18] text-slate-800 dark:text-slate-100 font-sans antialiased min-h-screen flex transition-colors duration-300">
 
@@ -271,12 +313,17 @@
 
             <div class="flex items-center justify-between pt-2 border-t border-slate-800/60">
                 <!-- Theme Toggle -->
-                <button @click="darkMode = !darkMode; localStorage.setItem('fake9ja_theme', darkMode ? 'dark' : 'light')"
+                <button type="button" @click="toggleTheme()"
                         class="p-2 rounded-lg bg-slate-800/80 text-slate-400 hover:text-white transition flex items-center gap-1.5 text-[11px]"
                         title="Toggle Dark / Light Mode">
-                    <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400" x-show="darkMode"></i>
-                    <i data-lucide="moon" class="w-3.5 h-3.5" x-show="!darkMode"></i>
-                    <span x-text="darkMode ? 'Dark' : 'Light'"></span>
+                    <span x-show="darkMode" class="flex items-center gap-1.5">
+                        <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Dark</span>
+                    </span>
+                    <span x-show="!darkMode" class="flex items-center gap-1.5" x-cloak>
+                        <i data-lucide="moon" class="w-3.5 h-3.5 text-slate-300"></i>
+                        <span>Light</span>
+                    </span>
                 </button>
 
                 <!-- Logout Form -->
@@ -340,10 +387,15 @@
                 </button>
 
                 <!-- Theme switch in header -->
-                <button @click="darkMode = !darkMode; localStorage.setItem('fake9ja_theme', darkMode ? 'dark' : 'light')" 
-                        class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition">
-                    <i data-lucide="sun" class="w-4 h-4 text-amber-400" x-show="darkMode"></i>
-                    <i data-lucide="moon" class="w-4 h-4" x-show="!darkMode"></i>
+                <button type="button" @click="toggleTheme()" 
+                        class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-emerald-500 transition"
+                        title="Toggle Dark/Light Mode">
+                    <span x-show="darkMode" class="flex items-center">
+                        <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+                    </span>
+                    <span x-show="!darkMode" class="flex items-center" x-cloak>
+                        <i data-lucide="moon" class="w-4 h-4"></i>
+                    </span>
                 </button>
             </div>
         </header>
