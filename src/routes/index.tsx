@@ -908,7 +908,7 @@ function Home() {
           </Reveal>
 
           <Accordion type="single" collapsible className="w-full">
-            ([
+            {([
               ["How does Fake9ja protect my identity?", "You can submit reports 100% anonymously. We never require your real name or personal information. Your IP address is never made public, and reports are anonymized before appearing on the public incident radar."],
               ["What is the WELCOME30 coupon code for?", "The coupon code WELCOME30 gives a 30% discount on Fast-Track Priority Lab Verification (expedited 2-hour report turnaround + formal evidence dossier) and Brand Watch subscriptions for authentic product manufacturers."],
               ["Where is the submitted data stored?", "All reports and evidence are securely indexed in our database (SQLite / MySQL) and synced with the active review desk and community radar."],

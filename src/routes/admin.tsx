@@ -891,7 +891,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Status Filter */}
                   <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-950 p-1 border border-slate-800">
-                    ([
+                    {([
                       ["all", "All Cases"],
                       ["received", "Pending"],
                       ["under_review", "In Review"],
@@ -1259,7 +1259,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                     {/* Preset Imagery Quick Selectors */}
                     <div className="grid grid-cols-3 gap-2.5 mb-3">
-                      ([
+                      {([
                         ["/images/counterfeit-malaria.jpg", "Malaria Tablet Pack"],
                         ["/images/counterfeit-cosmetics.jpg", "Cosmetic Lotion Bottle"],
                         ["/images/counterfeit-oil.jpg", "Motor Oil QR Check"],
