@@ -10,6 +10,7 @@ Route::get('/reports/track/{referenceId}', [Fake9jaController::class, 'trackRepo
 Route::post('/brand-watches', [Fake9jaController::class, 'storeBrandWatch']);
 Route::post('/coupons/validate', [Fake9jaController::class, 'validateCoupon']);
 Route::get('/hotspots', [Fake9jaController::class, 'getHotspots']);
+Route::get('/public-stats', [Fake9jaController::class, 'getPublicStats']);
 
 // Admin / Review Desk Endpoints
 Route::post('/admin/login', [Fake9jaController::class, 'adminLogin']);
@@ -19,5 +20,8 @@ Route::delete('/admin/reports/{id}', [Fake9jaController::class, 'deleteReport'])
 Route::get('/admin/brand-watches', [Fake9jaController::class, 'getBrandWatches']);
 Route::post('/admin/hotspots', [Fake9jaController::class, 'storeHotspot']);
 Route::delete('/admin/hotspots/{id}', [Fake9jaController::class, 'deleteHotspot']);
-Route::post('/admin/publish-fake', [Fake9jaController::class, 'publishFakeProduct']);
-
+// Video Testimonies Endpoints (Multi-source: YouTube, Instagram, TikTok, Facebook, Organic)
+Route::get('/video-testimonies', [Fake9jaController::class, 'getVideoTestimonies']);
+Route::post('/admin/video-testimonies', [Fake9jaController::class, 'storeVideoTestimony']);
+Route::put('/admin/video-testimonies/{id}', [Fake9jaController::class, 'updateVideoTestimony']);
+Route::delete('/admin/video-testimonies/{id}', [Fake9jaController::class, 'deleteVideoTestimony']);

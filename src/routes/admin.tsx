@@ -51,6 +51,10 @@ import {
   UploadCloud,
   UserCheck,
   Users,
+  Video,
+  Youtube,
+  Instagram,
+  ExternalLink,
   X,
   Zap,
 } from "lucide-react";
@@ -61,20 +65,28 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Fake9jaAPI, formatMediaUrl, getCategoryFallbackImage, type ReportItem } from "@/lib/api";
+import {
+  loadStoredTestimonies,
+  saveStoredTestimonies,
+  parseVideoSource,
+  getVideoThumbnail,
+  type VideoTestimony,
+  type VideoPlatform,
+} from "@/lib/testimonies";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Fake9ja Sentinel — Chief Inspector Intelligence Command" },
+      { title: "Fake9ja Sentinel ΓÇö Chief Inspector Intelligence Command" },
       { name: "description", content: "Dedicated administrative command desk for product triage, laboratory findings, and public counterfeit broadcast." },
-      { property: "og:title", content: "Fake9ja — Admin Intelligence Command" },
+      { property: "og:title", content: "Fake9ja ΓÇö Admin Intelligence Command" },
       { property: "og:type", content: "website" },
     ],
   }),
   component: AdminPage,
 });
 
-type AdminTab = "overview" | "triage" | "publish" | "hotspots" | "brands" | "coupons" | "export";
+type AdminTab = "overview" | "triage" | "publish" | "videos" | "hotspots" | "brands" | "coupons" | "export";
 
 function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -242,7 +254,7 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
                   setPassword(e.target.value);
                   setAuthError("");
                 }}
-                placeholder="••••••••••••"
+                placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
                 className="h-11 rounded-xl border-slate-700 bg-slate-950 pl-10 text-xs text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500"
               />
             </div>
@@ -267,7 +279,7 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
         <div className="mt-6 pt-5 border-t border-slate-800 text-center text-xs text-slate-400">
           <Link to="/" className="inline-flex items-center gap-1 hover:text-white transition-colors">
-            ← Return to Citizen Public Radar
+            ΓåÉ Return to Citizen Public Radar
           </Link>
         </div>
       </motion.div>
@@ -318,7 +330,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     issue_type: "Cloned Packaging & Inactive Formulation",
     details: "Purchased blister pack lacked hologram seal and failed spectroscopic dissolution testing.",
     reviewer_note: "Confirmed counterfeit: 0% active therapeutic ingredient. Immediate hazardous adulterant alert.",
-    purchase_price: "₦2,400",
+    purchase_price: "Γéª2,400",
     risk_level: "high" as "low" | "medium" | "high",
     preset_image: "/images/counterfeit-malaria.jpg",
   });
@@ -326,17 +338,64 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [publishPreviewUrl, setPublishPreviewUrl] = useState<string>("/images/counterfeit-malaria.jpg");
   const [isPublishing, setIsPublishing] = useState(false);
 
+  // VIDEO TESTIMONIES & CAROUSEL MANAGEMENT STATE
+  const [videoTestimonies, setVideoTestimonies] = useState<VideoTestimony[]>(() => loadStoredTestimonies());
+  const [videoForm, setVideoForm] = useState({
+    title: "",
+    source_url: "",
+    author_name: "Citizen Sentinel",
+    author_handle: "@citizen_sentinel",
+    location: "Alaba International Market, Lagos",
+    quote: "",
+    summary: "",
+    ai_feature: "Tamper band perforation and holographic sheen anomaly",
+  });
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState<string>("");
+  const [isSavingVideo, setIsSavingVideo] = useState(false);
+
   // Fetch all intelligence data
   const refreshAllData = async () => {
     setLoadingReports(true);
-    const [fetchedReports, fetchedWatches, fetchedHotspots] = await Promise.all([
+    const [fetchedReports, fetchedWatches, fetchedHotspots, fetchedVideos] = await Promise.all([
       Fake9jaAPI.getReports(),
       Fake9jaAPI.getBrandWatches(),
       Fake9jaAPI.getHotspots(),
+      Fake9jaAPI.getVideoTestimonies().catch(() => []),
     ]);
     setReports(fetchedReports);
     setBrandWatches(fetchedWatches);
     setHotspots(fetchedHotspots);
+    if (fetchedVideos && fetchedVideos.length > 0) {
+      const normalized: VideoTestimony[] = fetchedVideos.map((s: any) => {
+        const parsed = parseVideoSource(s.source_url || s.local_video_url || "");
+        return {
+          id: s.id,
+          type: parsed.inferredType,
+          title: s.title,
+          authorName: s.author_name || "Citizen Sentinel",
+          authorHandle: s.author_handle || "@citizen",
+          sourceUrl: s.source_url || "#",
+          embedUrl: s.embed_url || parsed.embedUrl,
+          localVideoUrl: s.local_video_url || parsed.localVideoUrl,
+          thumbnailUrl: getVideoThumbnail({ title: s.title, thumbnailUrl: s.thumbnail_url, sourceUrl: s.source_url, tag: s.tag, summary: s.summary }),
+          platform: (s.platform || parsed.platform) as VideoPlatform,
+          location: s.location || "Nigeria",
+          summary: s.summary || "",
+          quote: s.quote || "",
+          date: s.created_at ? new Date(s.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Recent",
+          tag: s.tag || "Citizen Alert",
+          duration: s.duration || "1:00",
+          aiFeature: s.ai_feature || "",
+        };
+      });
+      const existing = loadStoredTestimonies();
+      const existingIds = new Set(normalized.map((n) => String(n.id)));
+      const merged = [...normalized, ...existing.filter((e) => !existingIds.has(String(e.id)))];
+      setVideoTestimonies(merged);
+      saveStoredTestimonies(merged);
+    }
     setLoadingReports(false);
   };
 
@@ -459,7 +518,108 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     toast.success("Market hotspot surveillance status cleared.");
   };
 
-  // Export CSV for NAFDAC / Law Enforcement
+  // Video Testimony Handlers
+  const handleSaveVideoTestimony = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!videoForm.title.trim()) {
+      toast.error("Please enter a video title / headline.");
+      return;
+    }
+    if (!videoForm.source_url.trim() && !videoFile) {
+      toast.error("Please enter a video link or choose a video file.");
+      return;
+    }
+
+    setIsSavingVideo(true);
+    let resolvedLocalUrl = "";
+    if (videoFile) {
+      resolvedLocalUrl = URL.createObjectURL(videoFile);
+    }
+
+    let resolvedThumbnailUrl = thumbnailPreviewUrl || "";
+    if (!resolvedThumbnailUrl) {
+      resolvedThumbnailUrl = getVideoThumbnail({ title: videoForm.title, sourceUrl: videoForm.source_url });
+    }
+
+    const parsed = parseVideoSource(videoForm.source_url.trim() || resolvedLocalUrl);
+    const newTestimony: VideoTestimony = {
+      id: `admin-${Date.now()}`,
+      type: parsed.inferredType,
+      title: videoForm.title.trim(),
+      authorName: videoForm.author_name.trim() || "Chief Inspector Desk",
+      authorHandle: videoForm.author_handle.trim() || "@fake9ja_hq",
+      sourceUrl: videoForm.source_url.trim() || resolvedLocalUrl || "#",
+      embedUrl: parsed.embedUrl,
+      localVideoUrl: resolvedLocalUrl || parsed.localVideoUrl,
+      thumbnailUrl: resolvedThumbnailUrl || "/images/hero-scanner.jpg",
+      platform: parsed.platform,
+      location: videoForm.location.trim() || "National Distribution",
+      quote: videoForm.quote.trim() || "We (Nigerians) have the power to solve this.",
+      summary: videoForm.summary.trim() || "Flagged video alert contributing to AI model forensic training.",
+      aiFeature: videoForm.ai_feature.trim() || "Tamper seal fracture and holographic sheen analysis",
+      date: new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+      tag: "Admin Verified Alert",
+      duration: "1:00",
+      is_active: true,
+    };
+
+    try {
+      await Fake9jaAPI.storeVideoTestimony({
+        title: newTestimony.title,
+        source_url: newTestimony.sourceUrl,
+        platform: newTestimony.platform,
+        author_name: newTestimony.authorName,
+        author_handle: newTestimony.authorHandle,
+        location: newTestimony.location,
+        quote: newTestimony.quote,
+        summary: newTestimony.summary,
+        ai_feature: newTestimony.aiFeature,
+        tag: newTestimony.tag,
+        duration: newTestimony.duration,
+        local_video_url: newTestimony.localVideoUrl,
+        video_file: videoFile,
+        thumbnail_url: newTestimony.thumbnailUrl,
+      });
+    } catch {
+      // Offline fallback - still save to localStorage
+    }
+
+    const updated = [newTestimony, ...videoTestimonies];
+    setVideoTestimonies(updated);
+    saveStoredTestimonies(updated);
+    setIsSavingVideo(false);
+
+    setVideoForm({
+      title: "",
+      source_url: "",
+      author_name: "Citizen Sentinel",
+      author_handle: "@citizen_sentinel",
+      location: "Alaba International Market, Lagos",
+      quote: "",
+      summary: "",
+      ai_feature: "Tamper band perforation and holographic sheen anomaly",
+    });
+    setVideoFile(null);
+    setThumbnailFile(null);
+    setThumbnailPreviewUrl("");
+
+    toast.success(`Video testimony '${newTestimony.title}' published to landing carousel!`);
+  };
+
+  const handleDeleteVideo = async (id: string | number) => {
+    if (!confirm("Remove this video testimony from the public landing carousel?")) return;
+    try {
+      await Fake9jaAPI.deleteVideoTestimony(id);
+    } catch {
+      // Offline fallback
+    }
+    const updated = videoTestimonies.filter((v) => String(v.id) !== String(id));
+    setVideoTestimonies(updated);
+    saveStoredTestimonies(updated);
+    toast.success("Video testimony removed from landing carousel.");
+  };
+
+
   const handleExportCSV = () => {
     const headers = [
       "Reference ID",
@@ -527,6 +687,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: "overview", label: "Intelligence Overview", icon: Home },
     { id: "triage", label: "Incident Triage Queue", icon: Inbox, count: underReviewCount },
     { id: "publish", label: "Publish Fake Product", icon: ShieldAlert, highlight: true },
+    { id: "videos", label: "Video Testimonies", icon: Video, count: videoTestimonies.length },
     { id: "hotspots", label: "Market Hotspots", icon: Flame, count: hotspots.length },
     { id: "brands", label: "Brand Watch Sentinel", icon: ShieldCheck, count: brandWatches.length },
     { id: "coupons", label: "Promo & Vouchers", icon: Ticket },
@@ -687,7 +848,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {activeTab === "export" && "Law Enforcement & Regulatory Export Station"}
               </h2>
               <p className="hidden sm:block text-xs text-slate-400">
-                Connected to Fake9ja Citizen Defense Radar • Live SQLite/MySQL Synced
+                Connected to Fake9ja Citizen Defense Radar ΓÇó Live SQLite/MySQL Synced
               </p>
             </div>
           </div>
@@ -825,7 +986,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       onClick={() => setActiveTab("triage")}
                       className="rounded-xl h-8 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white"
                     >
-                      Review Cases →
+                      Review Cases ΓåÆ
                     </Button>
                   </div>
                 </section>
@@ -1100,7 +1261,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={() => setActiveTab("triage")}
                   className="rounded-xl text-xs font-bold border-slate-800 bg-slate-950 text-slate-300 hover:text-white shrink-0"
                 >
-                  ← Back to Triage Queue
+                  ΓåÉ Back to Triage Queue
                 </Button>
               </div>
 
@@ -1218,7 +1379,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <Input
                         value={publishForm.purchase_price}
                         onChange={(e) => setPublishForm({ ...publishForm, purchase_price: e.target.value })}
-                        placeholder="e.g. ₦2,400"
+                        placeholder="e.g. Γéª2,400"
                         className="h-11 rounded-xl border-slate-800 bg-slate-950 text-xs text-white placeholder:text-slate-500 focus:border-rose-500 focus:ring-rose-500"
                       />
                     </div>
@@ -1356,7 +1517,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             VERIFIED FAKE
                           </span>
                           <span className="bg-emerald-500/20 backdrop-blur border border-emerald-400/30 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                            ⚡ Fast-Track Radar
+                            ΓÜí Fast-Track Radar
                           </span>
                         </div>
 
@@ -1384,7 +1545,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </h4>
 
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          <strong className="text-white">Observed Anomaly:</strong> “{publishForm.issue_type}”
+                          <strong className="text-white">Observed Anomaly:</strong> ΓÇ£{publishForm.issue_type}ΓÇ¥
                         </p>
 
                         <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-2.5 text-[11px] text-slate-300">
@@ -1407,8 +1568,329 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
+          {/* TAB: VIDEO TESTIMONIES */}
+          {activeTab === "videos" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
+                    <Video className="size-5 text-emerald-400" />
+                    Video Testimony Carousel Management
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Add YouTube, Instagram, TikTok, Facebook links or upload organic MP4 clips to the landing carousel.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={refreshAllData}
+                  className="rounded-xl border-slate-700 bg-slate-950 text-xs font-semibold cursor-pointer"
+                >
+                  <RefreshCw className="size-3 mr-1.5" /> Refresh
+                </Button>
+              </div>
+
+              {/* Add Form + Live Preview */}
+              <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                {/* Left: Add Form */}
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl backdrop-blur-xl">
+                  <h4 className="font-display text-base font-bold text-white flex items-center gap-2 mb-4 pb-4 border-b border-slate-800">
+                    <PlusCircle className="size-4 text-emerald-400" />
+                    Add New Video Link or Citizen Recording
+                  </h4>
+
+                  <form onSubmit={handleSaveVideoTestimony} className="space-y-4 text-xs">
+                    <div>
+                      <label className="block font-bold text-slate-300 mb-1">Video Headline / Product Subject *</label>
+                      <Input
+                        required
+                        value={videoForm.title}
+                        onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
+                        placeholder="e.g. Counterfeit Antimalarial Blister Packaging in Onitsha"
+                        className="h-10 rounded-xl border-slate-700 bg-slate-950 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-300 mb-1">Video Link (YouTube, Instagram, TikTok, Facebook, X)</label>
+                      <Input
+                        value={videoForm.source_url}
+                        onChange={(e) => setVideoForm({ ...videoForm, source_url: e.target.value })}
+                        placeholder="https://www.youtube.com/watch?v=... or https://instagram.com/reel/..."
+                        className="h-10 rounded-xl border-slate-700 bg-slate-950 text-xs text-white font-mono"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">Paste any public link. Fake9ja auto-resolves embed playback.</p>
+                    </div>
+
+                    {/* Upload Organic MP4 */}
+                    <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/60 p-4">
+                      <label className="block font-bold text-slate-300 mb-1">Or Upload Direct Organic Citizen Video (.mp4, .mov, .webm)</label>
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setVideoFile(e.target.files[0]);
+                            toast.success(`Video file selected: ${e.target.files[0].name}`);
+                          }
+                        }}
+                        className="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-500/10 file:text-emerald-400 hover:file:bg-emerald-500/20 cursor-pointer"
+                      />
+                      {videoFile && (
+                        <p className="text-emerald-400 text-[11px] mt-1 font-mono">
+                          Attached: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Thumbnail Upload */}
+                    <div className="rounded-2xl border border-dashed border-amber-600/40 bg-amber-950/10 p-4">
+                      <label className="block font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                        <ImageIcon className="size-3.5 text-amber-400" />
+                        Upload Thumbnail Image (Optional — .jpg, .png, .webp)
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            setThumbnailFile(file);
+                            setThumbnailPreviewUrl(URL.createObjectURL(file));
+                            toast.success(`Thumbnail selected: ${file.name}`);
+                          }
+                        }}
+                        className="block w-full text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20 cursor-pointer"
+                      />
+                      {thumbnailPreviewUrl ? (
+                        <div className="mt-2 flex items-center gap-3">
+                          <img src={thumbnailPreviewUrl} alt="Thumbnail" className="w-24 h-14 object-cover rounded-lg border border-amber-500/30" />
+                          <div className="text-[11px] text-amber-400">
+                            <p className="font-semibold">Thumbnail ready</p>
+                            <p className="text-slate-400">{thumbnailFile?.name}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => { setThumbnailFile(null); setThumbnailPreviewUrl(""); }}
+                            className="ml-auto text-[10px] text-rose-400 hover:underline cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-slate-500 mt-1">If not provided, Fake9ja auto-extracts a thumbnail from the video URL.</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-bold text-slate-300 mb-1">Reporter / Sentinel Name</label>
+                        <Input
+                          value={videoForm.author_name}
+                          onChange={(e) => setVideoForm({ ...videoForm, author_name: e.target.value })}
+                          placeholder="e.g. Mazi Tunde / Citizen Report"
+                          className="h-10 rounded-xl border-slate-700 bg-slate-950 text-xs text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-300 mb-1">Market / State Location</label>
+                        <Input
+                          value={videoForm.location}
+                          onChange={(e) => setVideoForm({ ...videoForm, location: e.target.value })}
+                          placeholder="e.g. Idumota Market, Lagos"
+                          className="h-10 rounded-xl border-slate-700 bg-slate-950 text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-300 mb-1">Highlighted Citizen Quote / Warning</label>
+                      <Input
+                        value={videoForm.quote}
+                        onChange={(e) => setVideoForm({ ...videoForm, quote: e.target.value })}
+                        placeholder="e.g. Look at the seal texture, the spelling is completely distorted."
+                        className="h-10 rounded-xl border-slate-700 bg-slate-950 text-xs text-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-300 mb-1">AI Computer Vision Feature to Train</label>
+                      <Input
+                        value={videoForm.ai_feature}
+                        onChange={(e) => setVideoForm({ ...videoForm, ai_feature: e.target.value })}
+                        placeholder="e.g. Foil seal light refraction, cap crimping flaws, blurry batch codes"
+                        className="h-10 rounded-xl border-slate-700 bg-slate-950 text-xs text-white"
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={isSavingVideo}
+                      className="w-full h-11 rounded-xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 cursor-pointer mt-2"
+                    >
+                      {isSavingVideo ? (
+                        <span className="flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Saving & Publishing...</span>
+                      ) : (
+                        <span className="flex items-center justify-center gap-1.5"><Video className="size-4" /> Save & Broadcast to Landing Carousel</span>
+                      )}
+                    </Button>
+                  </form>
+                </div>
+
+                {/* Right: Live Preview */}
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 mb-3">
+                    <Radio className="size-3.5 animate-pulse" /> Live Card Preview
+                  </span>
+                  {(() => {
+                    const tempUrl = videoForm.source_url.trim();
+                    const parsed = tempUrl ? parseVideoSource(tempUrl) : null;
+                    const previewThumb = thumbnailPreviewUrl || (parsed?.platform === "YouTube" ? getVideoThumbnail({ sourceUrl: tempUrl }) : "/images/consumer-vigilance.jpg");
+                    return (
+                      <div className="rounded-2xl border border-emerald-500/40 bg-slate-900 overflow-hidden shadow-xl">
+                        <div className="aspect-video bg-black flex items-center justify-center relative overflow-hidden">
+                          {parsed?.platform === "YouTube" && parsed.embedUrl ? (
+                            <iframe src={`${parsed.embedUrl}?rel=0`} className="w-full h-full border-0" title="YouTube Preview" />
+                          ) : thumbnailPreviewUrl ? (
+                            <img src={thumbnailPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-slate-500 gap-2">
+                              <Video className="size-8 opacity-40" />
+                              <span className="text-xs">Paste a URL or pick a video file</span>
+                            </div>
+                          )}
+                          {parsed && (
+                            <div className="absolute top-2 left-2">
+                              <span className="text-[10px] font-bold bg-black/70 text-white px-2 py-0.5 rounded-md">{parsed.platform}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-3.5">
+                          <h5 className="font-display font-bold text-sm text-white">{videoForm.title || "Video Title Headline"}</h5>
+                          <p className="text-xs text-slate-300 italic mt-1">"{videoForm.quote || "Citizen observation quote..."}"</p>
+                          <div className="mt-2 text-[11px] text-slate-400 flex items-center gap-1">
+                            <MapPin className="size-3 text-emerald-400" />
+                            {videoForm.location}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Video Registry List */}
+              <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+                  <div>
+                    <h4 className="font-display text-base font-bold text-white">
+                      Active Video Testimonies on Carousel ({videoTestimonies.length})
+                    </h4>
+                    <p className="text-xs text-slate-400">These videos appear on the landing page for all visitors.</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {videoTestimonies.map((item) => {
+                    const thumbSrc = item.thumbnailUrl || getVideoThumbnail(item);
+                    return (
+                      <div
+                        key={String(item.id)}
+                        className="rounded-2xl border border-slate-800 bg-slate-950 flex flex-col overflow-hidden hover:border-slate-700 transition-colors"
+                      >
+                        {/* Thumbnail Preview */}
+                        <div className="relative aspect-video bg-black overflow-hidden group">
+                          {item.localVideoUrl ? (
+                            <video
+                              src={item.localVideoUrl}
+                              className="w-full h-full object-cover"
+                              poster={thumbSrc}
+                              muted
+                              preload="metadata"
+                              onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                              onMouseLeave={(e) => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }}
+                              playsInline
+                            />
+                          ) : (
+                            <img
+                              src={thumbSrc}
+                              alt={item.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/consumer-vigilance.jpg"; }}
+                            />
+                          )}
+                          {/* Platform badge */}
+                          <div className="absolute top-2 left-2">
+                            <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold backdrop-blur-sm ${
+                              item.platform === "YouTube" ? "bg-red-600/80 text-white" :
+                              item.platform === "Instagram" ? "bg-pink-600/80 text-white" :
+                              item.platform === "TikTok" ? "bg-cyan-700/80 text-white" :
+                              "bg-emerald-700/80 text-white"
+                            }`}>
+                              {item.platform}
+                            </span>
+                          </div>
+                          {/* Duration */}
+                          <div className="absolute bottom-2 right-2">
+                            <span className="text-[10px] font-mono bg-black/70 text-white px-1.5 py-0.5 rounded">{item.duration || "1:00"}</span>
+                          </div>
+                          {/* Play hover overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
+                            <div className="size-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                              <svg className="size-5 text-white fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="p-3.5 flex flex-col flex-1">
+                          <h5 className="font-display font-bold text-xs text-white line-clamp-2">{item.title}</h5>
+                          <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-1">
+                            <MapPin className="size-3 text-emerald-400 shrink-0" />
+                            <span className="truncate">{item.location}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-300 italic line-clamp-2 mt-1">"{item.quote}"</p>
+
+                          <div className="mt-auto pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                            {item.sourceUrl && item.sourceUrl !== "#" ? (
+                              <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 hover:underline">
+                                <ExternalLink className="size-3" /> View Source
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 font-mono">Organic File</span>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteVideo(item.id)}
+                              className="size-7 p-0 rounded-lg text-rose-400 hover:bg-rose-500/15 cursor-pointer"
+                              title="Remove"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {videoTestimonies.length === 0 && (
+                  <div className="text-center py-12 text-slate-500">
+                    <Video className="size-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm font-semibold">No video testimonies yet</p>
+                    <p className="text-xs mt-1">Use the form above to add the first video to the landing carousel.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* TAB 4: MARKET HOTSPOTS */}
           {activeTab === "hotspots" && (
+
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -1561,17 +2043,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     WELCOME30
                   </h4>
                   <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                    Official 30% discount applied to the ₦5,000 Priority Fast-Track SLA fee and Brand Watch Sentinel subscriptions.
+                    Official 30% discount applied to the Γéª5,000 Priority Fast-Track SLA fee and Brand Watch Sentinel subscriptions.
                   </p>
 
                   <div className="mt-6 rounded-2xl bg-slate-950/80 p-3.5 border border-slate-800 text-xs space-y-1.5 font-mono">
                     <div className="flex justify-between text-slate-400">
                       <span>Base Fast-Track:</span>
-                      <span className="line-through text-slate-500">₦5,000</span>
+                      <span className="line-through text-slate-500">Γéª5,000</span>
                     </div>
                     <div className="flex justify-between text-emerald-400 font-bold">
                       <span>Discounted Rate:</span>
-                      <span>₦3,500</span>
+                      <span>Γéª3,500</span>
                     </div>
                   </div>
                 </div>
@@ -1773,7 +2255,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     Alleged Defect / Anomaly
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    “{selectedReport.issue_type}”
+                    ΓÇ£{selectedReport.issue_type}ΓÇ¥
                   </p>
                   {selectedReport.details && (
                     <p className="mt-2 text-slate-300 leading-relaxed font-normal">
@@ -1878,7 +2360,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="size-4 text-emerald-400" />
                   <span className="font-mono text-xs font-bold text-white">
-                    Inspector Evidence Viewer • Forensic Packaging Inspection
+                    Inspector Evidence Viewer ΓÇó Forensic Packaging Inspection
                   </span>
                 </div>
                 <Button

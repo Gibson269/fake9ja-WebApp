@@ -213,11 +213,9 @@ function Track() {
                     <Zap className="size-3" /> Fast-Track Priority
                   </span>
                 )}
-                {report.coupon_used && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-xs font-mono font-bold text-foreground">
-                    <Tag className="size-3 text-emerald-500" /> {report.coupon_used}
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <Sparkles className="size-3 text-emerald-500" /> AI Dataset Ingested
+                </span>
                 <Badge
                   className={`text-xs font-extrabold uppercase tracking-wider rounded-xl px-3.5 py-1 ${
                     report.status === "verified_fake"

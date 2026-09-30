@@ -34,5 +34,19 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
     sourcemap: false,
+    target: "esnext",
+    minify: "esbuild",
+    cssMinify: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-router": ["@tanstack/react-router"],
+          "vendor-motion": ["framer-motion"],
+          "vendor-icons": ["lucide-react"],
+        },
+      },
+    },
   },
 });

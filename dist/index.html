@@ -16,17 +16,20 @@
       (function() {
         try {
           var saved = localStorage.getItem('fake9ja-theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (saved === 'dark' || (!saved && prefersDark)) {
-            document.documentElement.classList.add('dark');
-          } else {
+          // Default is DARK — only go light if user explicitly chose light
+          if (saved === 'light') {
             document.documentElement.classList.remove('dark');
+          } else {
+            document.documentElement.classList.add('dark');
           }
-        } catch (e) {}
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-Bcu5YemZ.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/styles-bDlOYrIe.css">
+    <script type="module" crossorigin src="/assets/index-DQQiBpE1.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-router-D5qnJCMV.js">
+    <link rel="stylesheet" crossorigin href="/assets/styles-C4ZQERpN.css">
   </head>
   <body class="bg-background text-foreground antialiased selection:bg-accent/30 selection:text-accent-foreground font-sans min-h-screen">
     <div id="root"></div>

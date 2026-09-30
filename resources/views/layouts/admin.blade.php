@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Immediate synchronous theme detection to prevent flash of light mode (FOUC) -->
+    <!-- Immediate synchronous theme detection to default to Dark Mode -->
     <script>
         (function() {
             try {
-                var saved = localStorage.getItem('fake9ja_theme');
-                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var isDark = saved === 'dark' || (!saved && (prefersDark || true));
-                if (isDark && saved !== 'light') {
-                    document.documentElement.classList.add('dark');
-                } else {
+                var saved = localStorage.getItem('fake9ja_theme') || localStorage.getItem('fake9ja-theme');
+                // Default is DARK — only go light if user explicitly chose light
+                if (saved === 'light') {
                     document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.classList.add('dark');
                 }
-            } catch (e) {}
+            } catch (e) {
+                document.documentElement.classList.add('dark');
+            }
         })();
     </script>
     <title>@yield('title', 'Chief Inspector Command Desk | Fake9ja Admin')</title>
@@ -413,7 +414,7 @@
             </div>
         @endif
 
-        @if(session('error') || $errors->any())
+        @if(session('error') || (isset($errors) && $errors->any()))
             <div class="p-4 mx-4 sm:mx-8 mt-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 flex items-center justify-between gap-3 shadow-sm">
                 <div class="flex items-center gap-3">
                     <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 shrink-0"></i>
@@ -421,7 +422,7 @@
                         @if(session('error'))
                             <p class="font-semibold">{{ session('error') }}</p>
                         @endif
-                        @if($errors->any())
+                        @if(isset($errors) && $errors->any())
                             <ul class="list-disc list-inside space-y-0.5 mt-1 font-medium">
                                 @foreach($errors->all() as $err)
                                     <li>{{ $err }}</li>

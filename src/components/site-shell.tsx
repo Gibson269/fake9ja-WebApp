@@ -33,7 +33,7 @@ const nav = [
 ] as const;
 
 export function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains("dark");
@@ -66,43 +66,15 @@ export function ThemeToggle() {
   );
 }
 
-// Brand Watch Modal with WELCOME30 coupon support
+// Brand & Manufacturer Data Portal Modal
 export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [brand, setBrand] = useState("");
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [tier, setTier] = useState<"starter" | "enterprise">("starter");
-  const [coupon, setCoupon] = useState("WELCOME30");
-  const [discountPercent, setDiscountPercent] = useState(30);
-  const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
-  const [couponMessage, setCouponMessage] = useState("WELCOME30 is active! (30% discount)");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const basePrice = tier === "starter" ? 45000 : 120000;
-  const discountAmount = Math.round((basePrice * discountPercent) / 100);
-  const finalPrice = basePrice - discountAmount;
-
-  const handleApplyCoupon = async () => {
-    if (!coupon.trim()) {
-      setDiscountPercent(0);
-      setCouponMessage("");
-      return;
-    }
-    setIsCheckingCoupon(true);
-    const res = await Fake9jaAPI.validateCoupon(coupon);
-    setIsCheckingCoupon(false);
-    if (res.valid) {
-      setDiscountPercent(res.discount_percent);
-      setCouponMessage(res.message);
-      toast.success(res.message);
-    } else {
-      setDiscountPercent(0);
-      setCouponMessage(res.message);
-      toast.error(res.message);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,11 +89,10 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
       email,
       phone,
       tier,
-      coupon_code: discountPercent > 0 ? coupon : undefined,
     });
     setIsSubmitting(false);
     setSubmitted(true);
-    toast.success(res.message);
+    toast.success(res.message || "Brand verification data registered successfully!");
   };
 
   return (
@@ -129,16 +100,16 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
       <DialogContent className="max-w-lg overflow-hidden rounded-2xl border-border bg-card p-0 shadow-2xl">
         <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 p-6 text-white">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <ShieldCheck className="size-4" /> Fake9ja Brand Watch
+            <ShieldCheck className="size-4" /> Fake9ja Manufacturer Registry
           </div>
           <DialogTitle className="mt-2 font-display text-2xl font-bold text-white">
-            Protect Your Authentic Products
+            Register Authentic Brand Data
           </DialogTitle>
           <DialogDescription className="mt-1 text-xs text-slate-300">
-            Monitor Nigerian open markets, get instant alerts on cloned barcodes, and deploy verified QR authentication for your customers.
+            Submit authentic barcode signatures and packaging designs to feed the AI model, helping train instant detection for cloned goods across Nigerian markets.
           </DialogDescription>
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/30">
-            <Tag className="size-3" /> Special Promo: 30% OFF with code <span className="font-mono font-bold text-white">WELCOME30</span>
+            <Sparkles className="size-3 text-emerald-400" /> Feeding the National Anti-Adulteration AI Model
           </div>
         </div>
 
@@ -147,15 +118,10 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30">
               <Check className="size-7" />
             </div>
-            <h3 className="mt-4 font-display text-xl font-bold">Brand Watch Enrolled!</h3>
+            <h3 className="mt-4 font-display text-xl font-bold">Brand Data Registered!</h3>
             <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-              We received your brand security inquiry for <strong className="text-foreground">{brand}</strong>. Our anti-counterfeiting team will email your customized intelligence dashboard setup within 2 hours.
+              We received your brand details for <strong className="text-foreground">{brand}</strong>. Our anti-counterfeit AI training team will link your authentic packaging specifications with the national verification radar.
             </p>
-            {discountPercent > 0 && (
-              <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                🎉 WELCOME30 applied: You locked in a ₦{discountAmount.toLocaleString()} launch discount!
-              </div>
-            )}
             <Button
               className="mt-6 w-full rounded-xl font-bold"
               onClick={() => {
@@ -178,11 +144,11 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <strong className="text-xs font-bold">Monthly Radar</strong>
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Popular</span>
+                  <strong className="text-xs font-bold">Standard Tier</strong>
+                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Active</span>
                 </div>
-                <div className="mt-2 text-base font-extrabold">₦31,500 <span className="text-xs font-normal text-muted-foreground line-through">₦45,000</span></div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Up to 5 SKUs monitored in major markets</p>
+                <div className="mt-2 text-sm font-extrabold text-foreground">AI Packaging Scan</div>
+                <p className="mt-1 text-[11px] text-muted-foreground">Up to 5 SKUs registered for neural vision matching</p>
               </div>
 
               <div
@@ -194,11 +160,11 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <strong className="text-xs font-bold">Nationwide Pro</strong>
-                  <span className="text-[10px] font-semibold text-amber-500">Full 36 States</span>
+                  <strong className="text-xs font-bold">Enterprise Tier</strong>
+                  <span className="text-[10px] font-semibold text-amber-500">36 States</span>
                 </div>
-                <div className="mt-2 text-base font-extrabold">₦84,000 <span className="text-xs font-normal text-muted-foreground line-through">₦120,000</span></div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Unlimited SKUs + Legal NAFDAC escalation</p>
+                <div className="mt-2 text-sm font-extrabold text-foreground">Full Market Telemetry</div>
+                <p className="mt-1 text-[11px] text-muted-foreground">Unlimited SKUs + Direct regulatory dossier dispatch</p>
               </div>
             </div>
 
@@ -247,42 +213,9 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
               </div>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground">Discount Coupon</label>
-              <div className="mt-1 flex gap-2">
-                <Input
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-                  placeholder="Enter coupon code"
-                  className="h-9 font-mono text-xs uppercase"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleApplyCoupon}
-                  disabled={isCheckingCoupon}
-                  className="h-9 px-3 text-xs font-semibold cursor-pointer"
-                >
-                  {isCheckingCoupon ? "Checking..." : "Apply"}
-                </Button>
-              </div>
-              {couponMessage && (
-                <p className={`mt-1 text-[11px] font-medium ${discountPercent > 0 ? "text-emerald-500" : "text-destructive"}`}>
-                  {couponMessage}
-                </p>
-              )}
-            </div>
-
-            <div className="rounded-xl bg-secondary/80 p-3 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Final Subscription Total:</span>
-              <div className="text-right">
-                <strong className="text-sm font-extrabold text-foreground">₦{finalPrice.toLocaleString()}</strong>
-                {discountPercent > 0 && (
-                  <span className="block text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                    You saved ₦{discountAmount.toLocaleString()} (30% off)
-                  </span>
-                )}
-              </div>
+            <div className="rounded-xl bg-secondary/80 p-3 text-xs leading-relaxed text-muted-foreground">
+              <strong className="text-foreground block mb-0.5">Authenticity Dataset Agreement:</strong>
+              By enrolling, you grant Fake9ja permission to index your official packaging barcodes and tamper marks solely to train open-source AI anti-adulteration models.
             </div>
 
             <Button
@@ -290,7 +223,7 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
               disabled={isSubmitting}
               className="w-full rounded-xl h-10 font-bold bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-sm shadow-emerald-600/30"
             >
-              {isSubmitting ? "Enrolling Brand..." : `Lock In 30% Off & Activate Watch`}
+              {isSubmitting ? "Registering Brand Data..." : "Enroll Brand into AI Verification Network"}
             </Button>
           </form>
         )}
@@ -302,37 +235,21 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
 export function SiteShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [brandWatchOpen, setBrandWatchOpen] = useState(false);
-  const [copiedCoupon, setCopiedCoupon] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => setOpen(false), [path]);
 
-  const copyCouponCode = () => {
-    navigator.clipboard.writeText("WELCOME30");
-    setCopiedCoupon(true);
-    toast.success("Coupon code 'WELCOME30' copied to clipboard! (30% OFF)");
-    setTimeout(() => setCopiedCoupon(false), 2000);
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-500">
-      {/* Top Launch Announcement Bar with WELCOME30 */}
+      {/* Top Mission Announcement Bar */}
       <div className="relative z-50 bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 border-b border-emerald-500/20 px-3 py-1.5 text-xs text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2 sm:px-6">
           <div className="flex items-center gap-2 overflow-hidden text-[11px] sm:text-xs">
-            <span className="flex size-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="font-semibold text-emerald-300">Fake9ja Launch Offer:</span>
+            <span className="flex size-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            <span className="font-semibold text-emerald-300 shrink-0">Civic AI Initiative:</span>
             <span className="truncate text-slate-200">
-              Get <strong>30% OFF</strong> Fast-Track Lab Verification & Brand Watch with code
+              We are gathering nationwide data to train an AI model capable of solving <strong>80% of product adulteration</strong> in Nigeria.
             </span>
-            <button
-              onClick={copyCouponCode}
-              title="Click to copy coupon code"
-              className="inline-flex items-center gap-1 rounded bg-emerald-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300 ring-1 ring-emerald-400/40 hover:bg-emerald-500/30 transition-all cursor-pointer"
-            >
-              WELCOME30
-              {copiedCoupon ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3 text-emerald-400" />}
-            </button>
           </div>
 
           <div className="hidden sm:flex items-center gap-3 shrink-0 text-[11px]">
@@ -340,7 +257,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
               onClick={() => setBrandWatchOpen(true)}
               className="text-emerald-300 hover:text-white font-medium underline underline-offset-2 transition-colors cursor-pointer"
             >
-              Brand Protection Portal →
+              Brand Data Registry →
             </button>
           </div>
         </div>
@@ -377,10 +294,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
               className="rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground cursor-pointer flex items-center gap-1.5"
             >
               <Building2 className="size-3.5 text-emerald-500" />
-              Brand Watch
-              <span className="rounded bg-amber-500/15 text-amber-500 px-1 py-0.2 text-[9px] font-bold">
-                -30%
-              </span>
+              Brand Registry
             </button>
           </nav>
 
@@ -442,10 +356,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   className="flex items-center justify-between rounded-lg px-3.5 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground text-left cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
-                    <Building2 className="size-4 text-emerald-500" /> Brand Watch Portal
-                  </span>
-                  <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-500">
-                    WELCOME30
+                    <Building2 className="size-4 text-emerald-500" /> Brand Data Registry
                   </span>
                 </button>
 
@@ -455,7 +366,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 >
                   <Link to="/report">
                     <ShieldAlert className="size-4 mr-1.5" />
-                    Report a Fake Product Now
+                    Contribute Fake Data Now
                   </Link>
                 </Button>
               </div>
@@ -484,7 +395,7 @@ export function Footer({ onOpenBrandWatch }: { onOpenBrandWatch?: () => void }) 
           <div className="md:col-span-2">
             <BrandMark />
             <p className="mt-3.5 max-w-md text-xs sm:text-sm leading-relaxed text-muted-foreground">
-              <strong>Fake9ja</strong> is Nigeria's citizen-led anti-counterfeit intelligence network. Together we expose fake medicines, adulterated foods, cloned electronics, and substandard goods across open markets in all 36 states and the FCT.
+              <strong>Fake9ja</strong> is a citizen intelligence initiative gathering real-time counterfeit data across Nigerian markets. Every report feeds and refines our open AI model engineered to solve 80% of product adulteration in Nigeria.
             </p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
@@ -499,14 +410,14 @@ export function Footer({ onOpenBrandWatch }: { onOpenBrandWatch?: () => void }) 
           <div>
             <h4 className="font-display text-xs font-bold uppercase tracking-wider text-foreground">Platform</h4>
             <ul className="mt-3 space-y-2 text-xs font-medium text-muted-foreground">
-              <li><Link to="/report" className="hover:text-emerald-500 transition-colors">Submit Fake Report</Link></li>
+              <li><Link to="/report" className="hover:text-emerald-500 transition-colors">Contribute Incident Data</Link></li>
               <li><Link to="/community" className="hover:text-emerald-500 transition-colors">Live Incident Radar</Link></li>
               <li><Link to="/track" className="hover:text-emerald-500 transition-colors">Track Reference ID</Link></li>
-              <li><Link to="/admin" className="hover:text-emerald-500 transition-colors">Inspector Review Queue</Link></li>
+              <li><Link to="/admin" className="hover:text-emerald-500 transition-colors">AI Review Desk</Link></li>
               {onOpenBrandWatch && (
                 <li>
                   <button onClick={onOpenBrandWatch} className="text-emerald-500 hover:underline font-semibold cursor-pointer">
-                    Brand Protection (WELCOME30)
+                    Brand Data Registry
                   </button>
                 </li>
               )}
@@ -514,12 +425,12 @@ export function Footer({ onOpenBrandWatch }: { onOpenBrandWatch?: () => void }) 
           </div>
 
           <div>
-            <h4 className="font-display text-xs font-bold uppercase tracking-wider text-foreground">Regulatory & Safety</h4>
+            <h4 className="font-display text-xs font-bold uppercase tracking-wider text-foreground">Mission & AI Vision</h4>
             <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-              Fake9ja aggregates citizen surveillance to generate open safety dossiers. Verified high-risk batches are catalogued to alert regulatory agencies (NAFDAC, SON, FCCPC) and safeguard Nigerian households.
+              We believe Nigerians have the power to solve product adulteration together. By crowdsourcing suspicious product barcodes, prices, and high-res imagery, we give regulators, retail stores, and citizens immediate verification capabilities.
             </p>
-            <div className="mt-3 rounded-lg border border-border bg-secondary/50 p-2.5 text-[10px] text-muted-foreground font-mono">
-              Coupon <strong>WELCOME30</strong> valid for fast-track lab review & brand subscription.
+            <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-2.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+              Target: 80% reduction in adulterated goods through citizen-trained AI vision.
             </div>
           </div>
         </div>
@@ -527,9 +438,9 @@ export function Footer({ onOpenBrandWatch }: { onOpenBrandWatch?: () => void }) 
         <div className="mt-10 border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <div>© {new Date().getFullYear()} Fake9ja Intelligence Network. All rights reserved.</div>
           <div className="flex items-center gap-4 text-xs font-medium">
-            <span>Built to protect 200M+ Nigerians</span>
+            <span>Built by and for 200M+ Nigerians</span>
             <span>•</span>
-            <span className="text-emerald-500 font-semibold">Zero Fake Tolerance</span>
+            <span className="text-emerald-500 font-semibold">Stopping Adulteration Together</span>
           </div>
         </div>
       </div>

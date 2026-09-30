@@ -6,6 +6,7 @@ use App\Models\BrandWatch;
 use App\Models\MarketHotspot;
 use App\Models\Report;
 use App\Models\ReportMedia;
+use App\Models\VideoTestimony;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -59,9 +60,12 @@ class AdminController extends Controller
             'escalated' => Report::where('status', 'escalated')->count(),
             'high_risk' => Report::where('risk_level', 'high')->count(),
             'brands_count' => BrandWatch::count(),
+            'testimonies_count' => VideoTestimony::count(),
         ];
 
         $hotspots = MarketHotspot::orderByDesc('incident_count')->take(5)->get();
+
+        $videoTestimonies = VideoTestimony::orderBy('sort_order', 'asc')->latest()->get();
 
         $states = [
             'Abia', 'Abuja (FCT)', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
@@ -104,6 +108,7 @@ class AdminController extends Controller
             'category', 
             'risk', 
             'hotspots', 
+            'videoTestimonies',
             'states', 
             'categories', 
             'defects'
@@ -326,5 +331,83 @@ class AdminController extends Controller
     public function publishFake(Request $request)
     {
         return $this->storeProduct($request);
+    }
+
+    public function storeTestimony(Request $request)
+    {
+        if (!session('fake9ja_admin_logged')) {
+            return redirect()->route('admin.index');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'platform' => 'required|string',
+            'source_url' => 'required|string',
+            'author_name' => 'nullable|string',
+            'author_handle' => 'nullable|string',
+            'location' => 'nullable|string',
+            'quote' => 'nullable|string',
+            'summary' => 'nullable|string',
+            'ai_feature' => 'nullable|string',
+            'tag' => 'nullable|string',
+            'duration' => 'nullable|string',
+            'video_file' => 'nullable|file|mimes:mp4,mov,avi,webm,mkv|max:102400',
+        ]);
+
+        $embedUrl = null;
+        $localVideoUrl = null;
+        $sourceUrl = $validated['source_url'];
+
+        // If local organic video was uploaded
+        if ($request->hasFile('video_file')) {
+            $path = $request->file('video_file')->store('testimonies', 'public');
+            $localVideoUrl = '/storage/' . $path;
+            $validated['platform'] = 'Organic';
+        }
+
+        // Auto-extract embed url for YouTube
+        if (preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i', $sourceUrl, $matches)) {
+            $embedUrl = 'https://www.youtube-nocookie.com/embed/' . $matches[1];
+        }
+
+        VideoTestimony::create([
+            'title' => $validated['title'],
+            'platform' => $validated['platform'],
+            'source_url' => $sourceUrl,
+            'embed_url' => $embedUrl,
+            'local_video_url' => $localVideoUrl,
+            'thumbnail_url' => $request->input('thumbnail_url') ?: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop&q=80',
+            'author_name' => $validated['author_name'] ?: 'Citizen Sentinel',
+            'author_handle' => $validated['author_handle'] ?: '@citizen_sentinel',
+            'location' => $validated['location'] ?: 'National Markets, Nigeria',
+            'quote' => $validated['quote'],
+            'summary' => $validated['summary'],
+            'ai_feature' => $validated['ai_feature'] ?: 'AI Forensic Verification Verified',
+            'tag' => $validated['tag'] ?: 'Citizen Video Alert',
+            'duration' => $validated['duration'] ?: '2:30',
+            'is_active' => true,
+            'sort_order' => VideoTestimony::count() + 1,
+        ]);
+
+        return back()->with('success', 'New Video Testimony / Evidence published to the Landing Page!');
+    }
+
+    public function destroyTestimony($id)
+    {
+        if (!session('fake9ja_admin_logged')) {
+            return redirect()->route('admin.index');
+        }
+
+        $testimony = VideoTestimony::findOrFail($id);
+        if ($testimony->local_video_url) {
+            $clean = ltrim(preg_replace('#^/storage/#', '', $testimony->local_video_url), '/');
+            $filePath = storage_path('app/public/' . $clean);
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        }
+        $testimony->delete();
+
+        return back()->with('success', 'Video testimony removed.');
     }
 }

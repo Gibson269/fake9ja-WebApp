@@ -6,6 +6,7 @@
 <div x-data="{
     addModalOpen: false,
     detailModalOpen: false,
+    videoModalOpen: false,
     activeTab: 'dossier',
     activeReport: null,
     zoomImage: null,
@@ -90,6 +91,12 @@ class="space-y-6">
         </div>
 
         <div class="flex items-center gap-3">
+            <button type="button" @click="videoModalOpen = true; $nextTick(() => { if (window.lucide) window.lucide.createIcons(); });"
+                    class="px-4 py-2.5 rounded-xl font-bold text-xs text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 hover:bg-emerald-900/60 shadow-lg flex items-center gap-2 transition transform active:scale-95">
+                <i data-lucide="video" class="w-4 h-4 text-emerald-400"></i>
+                <span>Video Testimonies ({{ count($videoTestimonies) }})</span>
+            </button>
+
             <button type="button" @click="openAddModal()"
                     class="px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition transform active:scale-95">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -1097,7 +1104,194 @@ class="space-y-6">
 
 
     <!-- ========================================================================= -->
-    <!-- MODAL 3: FULLSCREEN IMAGE LIGHTBOX -->
+    <!-- MODAL 3: VIDEO TESTIMONIES & CITIZEN RADAR MANAGEMENT -->
+    <!-- ========================================================================= -->
+    <div x-show="videoModalOpen" x-cloak 
+         class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+         @keydown.escape.window="videoModalOpen = false">
+        
+        <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden my-8"
+             @click.away="videoModalOpen = false">
+            
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/60">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-red-500/15 text-red-500 flex items-center justify-center">
+                        <i data-lucide="video" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-heading font-black text-lg text-slate-900 dark:text-white">
+                            Video Evidence & Testimony Management
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Add or remove videos from YouTube, TikTok, Instagram, Facebook, or organic MP4 files to display in the Landing Page Carousel.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" @click="videoModalOpen = false" 
+                        class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-8 max-h-[75vh] overflow-y-auto">
+                
+                <!-- Add New Video Form -->
+                <form action="{{ route('admin.testimonies.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                    @csrf
+                    <h3 class="font-heading font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-500"></i>
+                        <span>Publish New Video Testimony / Evidence</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">
+                                Video Title <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="title" required placeholder="e.g. Counterfeit Antibiotics in Idumota Market"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">
+                                Platform Source <span class="text-red-500">*</span>
+                            </label>
+                            <select name="platform" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="YouTube">YouTube</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="TikTok">TikTok</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Organic">Organic (Direct Upload or Link)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">
+                                Video Link (URL) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="source_url" required placeholder="https://youtube.com/watch?v=... or https://instagram.com/p/..."
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">
+                                Thumbnail Image URL (Optional)
+                            </label>
+                            <input type="text" name="thumbnail_url" placeholder="https://images.unsplash.com/..."
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">Author Name</label>
+                            <input type="text" name="author_name" placeholder="e.g. Dr. Emeka Eze"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">Author Handle</label>
+                            <input type="text" name="author_handle" placeholder="@emeka_pharma"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">Market Location</label>
+                            <input type="text" name="location" placeholder="e.g. Onitsha Main Market"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">Quote Statement</label>
+                            <input type="text" name="quote" placeholder="e.g. Look at the counterfeit hologram refraction..."
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">AI Anomaly Feature</label>
+                            <input type="text" name="ai_feature" placeholder="e.g. 99.1% Confidence Font Kerning Flaw"
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-xs text-slate-700 dark:text-slate-300 mb-1">
+                            Or Upload Local Video File (MP4, WebM - Max 100MB)
+                        </label>
+                        <input type="file" name="video_file" accept="video/*"
+                               class="w-full px-3 py-2 text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600">
+                    </div>
+
+                    <div class="text-right pt-2">
+                        <button type="submit" 
+                                class="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/20 transition">
+                            Publish Video to Landing Page &rarr;
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Existing Testimonies Table -->
+                <div>
+                    <h3 class="font-heading font-bold text-sm text-slate-900 dark:text-white mb-3 flex items-center justify-between">
+                        <span>Active Video Testimonies ({{ count($videoTestimonies) }})</span>
+                    </h3>
+
+                    <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-950/80 text-slate-500 border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th class="p-3 font-bold">Platform</th>
+                                    <th class="p-3 font-bold">Title</th>
+                                    <th class="p-3 font-bold">Author & Location</th>
+                                    <th class="p-3 font-bold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                @forelse($videoTestimonies as $vt)
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
+                                    <td class="p-3">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {{ $vt->platform === 'YouTube' ? 'bg-red-500/20 text-red-400' : ($vt->platform === 'Instagram' ? 'bg-pink-500/20 text-pink-400' : ($vt->platform === 'TikTok' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-blue-500/20 text-blue-400')) }}">
+                                            {{ $vt->platform }}
+                                        </span>
+                                    </td>
+                                    <td class="p-3 font-medium text-slate-900 dark:text-white">
+                                        <div class="max-w-xs truncate">{{ $vt->title }}</div>
+                                        <div class="text-[10px] text-slate-400 truncate">{{ $vt->source_url }}</div>
+                                    </td>
+                                    <td class="p-3 text-slate-600 dark:text-slate-300">
+                                        <div>{{ $vt->author_name }}</div>
+                                        <div class="text-[10px] text-slate-400">{{ $vt->location }}</div>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        <form action="{{ route('admin.testimonies.destroy', $vt->id) }}" method="POST" onsubmit="return confirm('Remove this video testimony?');">
+                                            @csrf
+                                            <button type="submit" class="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="4" class="p-6 text-center text-slate-400">
+                                        No video testimonies logged yet. Use the form above to add one.
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL 4: FULLSCREEN IMAGE LIGHTBOX -->
     <!-- ========================================================================= -->
     <div x-show="zoomImage" x-cloak 
          class="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"

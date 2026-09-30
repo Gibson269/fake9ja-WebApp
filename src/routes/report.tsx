@@ -44,7 +44,7 @@ export const Route = createFileRoute("/report")({
   component: ReportPage,
 });
 
-const steps = ["Product Info", "Evidence Files", "Market Location", "What Went Wrong", "Fast-Track & Submit"];
+const steps = ["Product Info", "Evidence Files", "Market Location", "What Went Wrong", "Review & Submit"];
 
 const nigerianStates = [
   "Lagos", "FCT Abuja", "Kano", "Rivers", "Anambra", "Abia", "Oyo", "Ogun", "Kaduna", "Enugu",
@@ -61,13 +61,6 @@ function ReportPage() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRef, setSubmittedRef] = useState("");
-
-  // Priority verification & WELCOME30 coupon state
-  const [isPriority, setIsPriority] = useState(false);
-  const [couponCode, setCouponCode] = useState("WELCOME30");
-  const [couponDiscount, setCouponDiscount] = useState(30);
-  const [couponApplied, setCouponApplied] = useState(true);
-  const [couponFeedback, setCouponFeedback] = useState("🎉 WELCOME30 applied! 30% discount unlocked.");
 
   const [form, setForm] = useState({
     name: "",
@@ -100,32 +93,6 @@ function ReportPage() {
     setPreviewUrls((p) => p.filter((_, i) => i !== index));
   };
 
-  const handleApplyCoupon = async () => {
-    const code = couponCode.trim().toUpperCase();
-    if (!code) {
-      setCouponDiscount(0);
-      setCouponApplied(false);
-      setCouponFeedback("Please enter a coupon code.");
-      return;
-    }
-    const res = await Fake9jaAPI.validateCoupon(code);
-    if (res.valid) {
-      setCouponDiscount(res.discount_percent);
-      setCouponApplied(true);
-      setCouponFeedback(res.message);
-      toast.success(res.message);
-    } else {
-      setCouponDiscount(0);
-      setCouponApplied(false);
-      setCouponFeedback(res.message);
-      toast.error(res.message);
-    }
-  };
-
-  const basePriorityPrice = 5000;
-  const discountAmount = couponApplied ? Math.round((basePriorityPrice * couponDiscount) / 100) : 0;
-  const finalPriorityPrice = basePriorityPrice - discountAmount;
-
   const handleSubmit = async () => {
     if (!form.name.trim()) {
       toast.error("Please enter the product name.");
@@ -150,10 +117,7 @@ function ReportPage() {
     fd.append("details", form.details || "");
     fd.append("contact", form.contact || "");
     fd.append("is_anonymous", (!form.contact).toString());
-    fd.append("is_priority", isPriority.toString());
-    if (isPriority && couponApplied) {
-      fd.append("coupon_code", couponCode.trim().toUpperCase());
-    }
+    fd.append("is_priority", "false");
 
     files.forEach((f) => fd.append("files[]", f));
 
@@ -162,7 +126,7 @@ function ReportPage() {
       setIsSubmitting(false);
       setSubmittedRef(res.reference_id);
       setDone(true);
-      toast.success("Report securely logged in Fake9ja MySQL database!");
+      toast.success("Report securely logged in Fake9ja database!");
     } catch {
       setIsSubmitting(false);
       const fallbackRef = `EIE-NG-${Math.floor(100000 + Math.random() * 899999)}`;
@@ -204,7 +168,7 @@ function ReportPage() {
       </header>
 
       {done ? (
-        <SuccessScreen referenceId={submittedRef} isPriority={isPriority} couponUsed={isPriority && couponApplied ? couponCode : null} />
+        <SuccessScreen referenceId={submittedRef} />
       ) : (
         <main className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-7xl flex-1 md:grid-cols-[280px_1fr] w-full">
           {/* Sidebar Step Navigator */}
@@ -535,97 +499,38 @@ function ReportPage() {
                   </motion.div>
                 )}
 
-                {/* STEP 5: Fast-Track Verification, Coupon WELCOME30, & Contact */}
+                {/* STEP 5: AI Training Data Contribution & Contact */}
                 {step === 4 && (
                   <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
                     <div>
                       <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-foreground">
-                        Fast-Track Review & Final Submission
+                        Contribute to AI Anti-Adulteration Model
                       </h1>
                       <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
-                        Review your report options, apply your launch discount coupon, and send your evidence to the MySQL queue.
+                        Review your incident evidence. Every report you submit feeds and trains our open AI vision model to eradicate 80% of product adulteration in Nigeria.
                       </p>
                     </div>
 
-                    {/* Priority Verification Upgrade Card */}
-                    <div
-                      onClick={() => setIsPriority(!isPriority)}
-                      className={`cursor-pointer rounded-2xl border p-4 transition-all ${
-                        isPriority
-                          ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500/30 shadow-md"
-                          : "border-border bg-card hover:border-emerald-500/40"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
-                          <div className={`grid size-9 place-items-center rounded-xl ${isPriority ? "bg-emerald-500 text-white" : "bg-secondary text-muted-foreground"}`}>
-                            <Zap className="size-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <strong className="text-sm font-bold text-foreground">
-                                Fast-Track Lab & Priority Verification
-                              </strong>
-                              <span className="rounded-full bg-emerald-500/20 px-2 py-0.2 text-[10px] font-bold text-emerald-500 uppercase">
-                                Recommended
-                              </span>
-                            </div>
-                            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                              Get 2-hour expedited reviewer turnaround + formal tamper analysis dossier for NAFDAC and FCCPC vendor refunds.
-                            </p>
-                          </div>
+                    {/* AI Dataset Integration Card */}
+                    <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="grid size-10 place-items-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
+                          <Sparkles className="size-5" />
                         </div>
-
-                        <input
-                          type="checkbox"
-                          checked={isPriority}
-                          onChange={(e) => setIsPriority(e.target.checked)}
-                          className="mt-1 size-5 accent-emerald-500 cursor-pointer"
-                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <strong className="text-sm font-bold text-foreground">
+                              Citizen AI Training Pipeline
+                            </strong>
+                            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-500 uppercase">
+                              100% Free Public Good
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                            Every uploaded image, batch number, location, and price point directly trains computer vision and market anomaly detection to protect Nigerian consumers nationwide.
+                          </p>
+                        </div>
                       </div>
-
-                      {isPriority && (
-                        <div className="mt-4 border-t border-border/80 pt-3">
-                          <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                            <Tag className="size-3.5 text-emerald-500" /> Apply Coupon Code
-                          </label>
-                          <div className="mt-1.5 flex gap-2">
-                            <Input
-                              value={couponCode}
-                              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                              placeholder="e.g. WELCOME30"
-                              className="h-10 font-mono text-xs uppercase"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleApplyCoupon}
-                              className="h-10 px-4 text-xs font-bold cursor-pointer"
-                            >
-                              Apply
-                            </Button>
-                          </div>
-
-                          {couponFeedback && (
-                            <p className={`mt-1.5 text-xs font-semibold ${couponApplied ? "text-emerald-500" : "text-destructive"}`}>
-                              {couponFeedback}
-                            </p>
-                          )}
-
-                          <div className="mt-3 flex items-center justify-between rounded-xl bg-secondary p-3 text-xs">
-                            <span className="text-muted-foreground">Priority Verification Fee:</span>
-                            <div className="text-right">
-                              <span className="text-xs line-through text-muted-foreground mr-2">₦5,000</span>
-                              <strong className="text-sm font-extrabold text-foreground">₦{finalPriorityPrice.toLocaleString()}</strong>
-                              {couponApplied && (
-                                <span className="block text-[10px] font-bold text-emerald-500">
-                                  Saved ₦{discountAmount.toLocaleString()} with {couponCode}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* Contact or Anonymous Option */}
@@ -705,7 +610,7 @@ function ReportPage() {
                   ) : step === 4 ? (
                     <>
                       <FileCheck className="size-4 mr-1.5" />
-                      {isPriority ? `Submit & Pay ₦${finalPriorityPrice.toLocaleString()}` : "Submit Anonymous Report"}
+                      Submit Report to AI Dataset
                     </>
                   ) : (
                     <>
@@ -732,7 +637,7 @@ function ReportPage() {
   );
 }
 
-function SuccessScreen({ referenceId, isPriority, couponUsed }: { referenceId: string; isPriority: boolean; couponUsed: string | null }) {
+function SuccessScreen({ referenceId }: { referenceId: string }) {
   const [copied, setCopied] = useState(false);
 
   const copyRef = () => {
@@ -750,23 +655,16 @@ function SuccessScreen({ referenceId, isPriority, couponUsed }: { referenceId: s
         </div>
 
         <p className="mt-5 text-xs font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-          Report Stored in MySQL Database
+          Report Stored in Database & AI Training Queue
         </p>
 
         <h1 className="mt-1 font-display text-2xl sm:text-3xl font-extrabold text-foreground">
-          Thank you for protecting Naija!
+          Thank you for protecting Nigeria!
         </h1>
 
         <p className="mx-auto mt-2 max-w-sm text-xs sm:text-sm leading-relaxed text-muted-foreground">
-          Your evidence has been encrypted and added to the review queue. Keep this reference ID safe to track its verification stage.
+          We (Nigerians) have the power to solve this. Your evidence has been stored and fed into our open AI training dataset to stop product adulteration nationwide.
         </p>
-
-        {isPriority && (
-          <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-            ⚡ Fast-Track Activated: Assigned to Lead Inspector (2-Hour SLA)
-            {couponUsed && <span className="block font-normal text-[11px] mt-0.5">Coupon {couponUsed} applied (-30%)</span>}
-          </div>
-        )}
 
         <div className="mx-auto mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">

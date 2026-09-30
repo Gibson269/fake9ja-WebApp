@@ -42,6 +42,8 @@ Route::post('/admin/products', [AdminController::class, 'storeProduct'])->name('
 Route::post('/admin/products/{id}/update', [AdminController::class, 'updateProduct'])->name('admin.products.update');
 Route::post('/admin/products/{id}/delete', [AdminController::class, 'destroyProduct'])->name('admin.products.destroy');
 Route::post('/admin/media/{id}/delete', [AdminController::class, 'deleteMedia'])->name('admin.media.destroy');
+Route::post('/admin/testimonies', [AdminController::class, 'storeTestimony'])->name('admin.testimonies.store');
+Route::post('/admin/testimonies/{id}/delete', [AdminController::class, 'destroyTestimony'])->name('admin.testimonies.destroy');
 
 // Direct Storage Media Delivery (Cross-platform evidence serving with CORS)
 Route::get('/storage/{path}', function ($path) {

@@ -8,12 +8,33 @@
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none"></div>
     <div class="absolute -top-32 -right-32 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
+    <!-- AI Data Gathering Live Notice Ribbon -->
+    <div class="bg-emerald-950/80 border-b border-emerald-500/30 py-2.5 px-4 text-xs">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    DATA GATHERING PIPELINE
+                </span>
+                <span class="text-slate-300 text-xs text-center sm:text-left">
+                    <strong class="text-white">Active Intake:</strong> We are gathering real-world counterfeit evidence across Nigerian markets to train the AI model. Live data below stream from database.
+                </span>
+            </div>
+            <div class="flex items-center gap-3 text-[11px] text-emerald-300 shrink-0">
+                <span class="font-mono flex items-center gap-1">
+                    <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    {{ number_format($trainingVectors ?? $trainingDataPoints) }} Vectors Ingested
+                </span>
+            </div>
+        </div>
+    </div>
+
     <!-- Live Ticker Ribbon -->
     @if(isset($tickerAlerts) && $tickerAlerts->count() > 0)
-    <div class="bg-emerald-950/60 border-y border-emerald-800/40 py-2.5 px-4 overflow-hidden">
+    <div class="bg-slate-950/90 border-b border-slate-800 py-2 px-4 overflow-hidden">
         <div class="max-w-7xl mx-auto flex items-center gap-3">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
-                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                 LIVE RADAR
             </span>
             <div class="overflow-hidden whitespace-nowrap w-full">
@@ -99,7 +120,7 @@
                         <!-- Floating Telemetry Badge 1: Verification Status -->
                         <div class="absolute top-3.5 left-3.5 flex items-center gap-2 rounded-xl bg-slate-900/85 border border-emerald-500/40 px-3 py-1.5 text-xs text-white backdrop-blur shadow-lg">
                             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                            <span class="font-mono text-[11px] font-bold text-emerald-300">RADAR SCAN: ACTIVE</span>
+                            <span class="font-mono text-[11px] font-bold text-emerald-300">RADAR SCAN: LIVE</span>
                         </div>
 
                         <!-- Floating Telemetry Badge 2: Live Hotspot Counter -->
@@ -111,8 +132,8 @@
                                 </strong>
                             </div>
                             <div class="text-right">
-                                <span class="block text-[10px] font-mono text-emerald-400 font-bold">WELCOME30</span>
-                                <span class="text-[11px] text-slate-300">30% Off Priority</span>
+                                <span class="block text-[10px] font-mono text-emerald-400 font-bold">AI SENTINEL</span>
+                                <span class="text-[11px] text-slate-300">{{ number_format($trainingDataPoints) }} Vectors</span>
                             </div>
                         </div>
                     </div>
@@ -121,15 +142,15 @@
                     <div class="p-3.5 grid grid-cols-3 gap-2 text-center text-xs">
                         <div class="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-2 border border-slate-200 dark:border-slate-800">
                             <span class="text-[10px] uppercase font-bold text-slate-500 block">Verified Fakes</span>
-                            <span class="font-heading font-extrabold text-slate-900 dark:text-white text-sm">{{ $verifiedCount > 0 ? $verifiedCount : 684 }}</span>
+                            <span class="font-heading font-extrabold text-red-500 dark:text-red-400 text-sm">{{ $verifiedFakeCount > 0 ? $verifiedFakeCount : 684 }}</span>
                         </div>
                         <div class="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-2 border border-slate-200 dark:border-slate-800">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 block">Hotspots</span>
-                            <span class="font-heading font-extrabold text-slate-900 dark:text-white text-sm">{{ $hotspotsCount > 0 ? $hotspotsCount : 32 }} Markets</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-500 block">Active Hotspots</span>
+                            <span class="font-heading font-extrabold text-amber-500 dark:text-amber-400 text-sm">{{ $hotspotsCount > 0 ? $hotspotsCount : 32 }} Markets</span>
                         </div>
                         <div class="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-2 border border-slate-200 dark:border-slate-800">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 block">Speed</span>
-                            <span class="font-heading font-extrabold text-emerald-500 text-sm">Real-Time</span>
+                            <span class="text-[10px] uppercase font-bold text-slate-500 block">States Covered</span>
+                            <span class="font-heading font-extrabold text-emerald-500 text-sm">{{ $activeStatesCount }}/36 States</span>
                         </div>
                     </div>
                 </div>
@@ -230,6 +251,344 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<!-- AI MODEL TRAINING & NIGERIAN EMPOWERMENT MISSION -->
+<section class="py-16 bg-gradient-to-br from-slate-950 via-emerald-950/80 to-slate-950 text-white relative overflow-hidden border-y border-emerald-500/30">
+    <div class="absolute inset-0 bg-[radial-gradient(#10b981_1px,transparent_1px)] [background-size:24px_24px] opacity-15"></div>
+    <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            <div class="lg:col-span-7 space-y-5">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>AI Model Training Initiative &bull; Citizen Powered</span>
+                </div>
+
+                <h2 class="font-heading font-black text-3xl sm:text-4xl lg:text-5xl leading-tight tracking-tight text-white">
+                    Powering AI to Eliminate <br class="hidden sm:inline">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                        80% of Product Adulteration
+                    </span>
+                </h2>
+
+                <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+                    Every report, photo, and packaging anomaly you submit does not just sit in a ledger — it directly trains and fine-tunes our high-precision computer vision AI model.
+                </p>
+
+                <div class="p-4 rounded-2xl bg-emerald-900/30 border border-emerald-500/40 text-sm text-emerald-200 flex items-start gap-3">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong class="text-white block font-heading font-bold text-base">We (Nigerians) Have the Power to Solve This.</strong>
+                        <span class="text-xs text-emerald-300/90 leading-relaxed">
+                            By democratizing counterfeit reporting across all 36 states, Nigerian consumers are building Africa's largest open forensic safety database.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Live Training Telemetry Metrics -->
+                <div class="grid grid-cols-3 gap-3 pt-2">
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-emerald-500/20">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Training Vectors</span>
+                        <span class="font-heading font-black text-xl text-emerald-400">{{ number_format($trainingVectors ?? $trainingDataPoints) }}+</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Live DB Vectors</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-emerald-500/20">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Target Stop Rate</span>
+                        <span class="font-heading font-black text-xl text-cyan-400">{{ $targetAccuracy ?? '80%' }}</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Adulteration Cut</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-emerald-500/20">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Detection Speed</span>
+                        <span class="font-heading font-black text-xl text-amber-400">{{ $detectionSpeed ?? '< 1.2s' }}</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Inference Benchmark</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Visual: Neural Scanner Diagram -->
+            <div class="lg:col-span-5">
+                <div class="glass-panel p-5 rounded-3xl border border-emerald-500/40 bg-slate-900/90 shadow-2xl relative">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="font-mono text-emerald-400 font-bold">NEURAL INTAKE PIPELINE</span>
+                        </div>
+                        <span class="text-[11px] font-mono text-slate-400">v3.8-AFRICA</span>
+                    </div>
+
+                    <div class="space-y-3 mt-4 text-xs">
+                        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="scan" class="w-4 h-4 text-emerald-400"></i>
+                                <span class="text-slate-200">Micro-Print Font Kerning</span>
+                            </div>
+                            <span class="font-mono text-emerald-400 font-bold">99.4% Match</span>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+                                <span class="text-slate-200">Laser Hologram Refraction</span>
+                            </div>
+                            <span class="font-mono text-amber-400 font-bold">Active Check</span>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+                                <span class="text-slate-200">NAFDAC Registry Cross-Ref</span>
+                            </div>
+                            <span class="font-mono text-cyan-400 font-bold">Automated</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-800 text-center">
+                        <a href="{{ route('report.create') }}" class="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/30">
+                            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                            <span>Contribute Forensic Evidence (Free)</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- MULTI-SOURCE VIDEO TESTIMONIES & EVIDENCE CAROUSEL -->
+<section class="py-16 bg-slate-900/50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800"
+         x-data="videoEvidenceCarousel(@js($videoTestimonies))">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Section Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/30 mb-2">
+                    <i data-lucide="video" class="w-3.5 h-3.5 text-red-500"></i>
+                    <span>Citizen Video Radar</span>
+                </div>
+                <h2 class="font-heading font-black text-3xl sm:text-4xl text-slate-900 dark:text-white tracking-tight">
+                    Video Evidence & Testimonies
+                </h2>
+                <p class="text-slate-600 dark:text-slate-400 text-sm mt-1.5 max-w-2xl">
+                    Real consumer video reports sourced across <strong class="text-slate-900 dark:text-white">YouTube, Instagram, TikTok, Facebook</strong>, and direct citizen uploads. Click any video to play and review directly.
+                </p>
+            </div>
+
+            <!-- Carousel Controls & Filter Tabs -->
+            <div class="flex flex-wrap items-center gap-2">
+                <template x-for="p in ['All', 'YouTube', 'Instagram', 'TikTok', 'Facebook', 'Organic']" :key="p">
+                    <button @click="setFilter(p)"
+                            :class="activeFilter === p ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-emerald-500'"
+                            class="px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm cursor-pointer"
+                            x-text="p">
+                    </button>
+                </template>
+
+                <div class="flex items-center gap-1.5 ml-2">
+                    <button @click="prev()" 
+                            class="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition shadow-sm cursor-pointer"
+                            aria-label="Previous video">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                    </button>
+                    <button @click="next()" 
+                            class="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition shadow-sm cursor-pointer"
+                            aria-label="Next video">
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Grid / Cards Display -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <template x-for="(item, idx) in visibleVideos" :key="item.id || idx">
+                <div class="glass-panel rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:border-emerald-500/60 transition-all duration-300 shadow-xl flex flex-col group cursor-pointer"
+                     @click="openModal(item)">
+                    
+                    <!-- Thumbnail & Video Preview Trigger -->
+                    <div class="relative aspect-video bg-slate-950 overflow-hidden"
+                         @mouseenter="$el.querySelector('video')?.play().catch(() => {})"
+                         @mouseleave="const v = $el.querySelector('video'); if (v) { v.pause(); v.currentTime = 0; }">
+                        
+                        <!-- Organic Video Live Preview Snippet -->
+                        <template x-if="item.local_video_url || item.platform === 'Organic'">
+                            <video :src="item.local_video_url || item.source_url" 
+                                   :poster="getThumbnail(item)"
+                                   preload="metadata"
+                                   muted 
+                                   playsinline 
+                                   loop
+                                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-90 group-hover:opacity-100"></video>
+                        </template>
+
+                        <!-- Social / External High-Res Dynamic Thumbnail Preview -->
+                        <template x-if="!item.local_video_url && item.platform !== 'Organic'">
+                            <img :src="getThumbnail(item)" 
+                                 :alt="item.title" 
+                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-85 group-hover:opacity-100"
+                                 loading="lazy">
+                        </template>
+
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent pointer-events-none"></div>
+                        
+                        <!-- Platform Badge -->
+                        <div class="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/90 backdrop-blur border border-white/10 text-[11px] font-bold text-white shadow z-10">
+                            <span class="w-2 h-2 rounded-full"
+                                  :class="{
+                                      'bg-red-500': item.platform === 'YouTube',
+                                      'bg-pink-500': item.platform === 'Instagram',
+                                      'bg-cyan-400': item.platform === 'TikTok',
+                                      'bg-blue-500': item.platform === 'Facebook',
+                                      'bg-emerald-400': item.platform === 'Organic' || item.platform === 'X'
+                                  }"></span>
+                            <span x-text="item.platform"></span>
+                        </div>
+
+                        <!-- Duration Badge -->
+                        <div class="absolute top-3 right-3 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono font-bold text-slate-200 z-10"
+                             x-text="item.duration || 'Video'">
+                        </div>
+
+                        <!-- Big Play Center Overlay Button -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-500/90 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40 transform group-hover:scale-110 transition">
+                                <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+                            </div>
+                        </div>
+
+                        <!-- Location strip -->
+                        <div class="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-[11px] text-slate-300 z-10">
+                            <span class="flex items-center gap-1 truncate font-medium">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                                <span x-text="item.location || 'Nigeria'"></span>
+                            </span>
+                            <span class="text-emerald-400 font-bold shrink-0">Play Evidence &rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
+                        <div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                  x-text="item.tag || 'Citizen Alert'"></span>
+
+                            <h3 class="font-heading font-bold text-base text-slate-900 dark:text-white mt-2 line-clamp-2 leading-snug group-hover:text-emerald-500 transition"
+                                x-text="item.title"></h3>
+
+                            <blockquote class="mt-2 text-xs italic text-slate-600 dark:text-slate-300 border-l-2 border-emerald-500/60 pl-2.5 line-clamp-2"
+                                        x-show="item.quote"
+                                        x-text="'“' + item.quote + '”'"></blockquote>
+                        </div>
+
+                        <!-- AI Anomaly Tag -->
+                        <div class="pt-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 space-y-1.5">
+                            <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold"
+                                 x-show="item.ai_feature">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i>
+                                <span class="truncate" x-text="item.ai_feature"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                                <span class="font-medium truncate" x-text="item.author_name"></span>
+                                <span class="font-mono text-[10px]" x-text="item.author_handle"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- In-Page Interactive Video Player Modal -->
+        <div x-show="modalOpen" 
+             x-cloak 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md"
+             @keydown.escape.window="closeModal()">
+            <div class="relative w-full max-w-4xl bg-slate-900 border border-emerald-500/40 rounded-3xl overflow-hidden shadow-2xl"
+                 @click.away="closeModal()">
+                
+                <!-- Modal Header -->
+                <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+                    <div class="flex items-center gap-3">
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              x-text="currentVideo?.platform || 'Video Evidence'"></span>
+                        <h3 class="font-heading font-bold text-base sm:text-lg text-white truncate max-w-xl"
+                            x-text="currentVideo?.title"></h3>
+                    </div>
+                    <button @click="closeModal()" 
+                            class="p-2 rounded-xl bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 transition cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Video Player Container -->
+                <div class="relative aspect-video bg-black flex items-center justify-center">
+                    
+                    <!-- Direct Organic Video Player -->
+                    <template x-if="currentVideo && (currentVideo.local_video_url || currentVideo.platform === 'Organic')">
+                        <video :src="currentVideo.local_video_url || currentVideo.source_url" 
+                               controls 
+                               autoplay 
+                               class="w-full h-full object-contain"></video>
+                    </template>
+
+                    <!-- YouTube / Iframe Player -->
+                    <template x-if="currentVideo && currentVideo.embed_url && currentVideo.platform !== 'Organic'">
+                        <iframe :src="currentVideo.embed_url + '?autoplay=1&rel=0'" 
+                                class="w-full h-full border-0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen></iframe>
+                    </template>
+
+                    <!-- External Link Fallback if no embed available -->
+                    <template x-if="currentVideo && !currentVideo.embed_url && !currentVideo.local_video_url">
+                        <div class="p-8 text-center space-y-4">
+                            <i data-lucide="external-link" class="w-12 h-12 text-emerald-400 mx-auto"></i>
+                            <p class="text-white text-base">This video is hosted externally on <span class="font-bold text-emerald-400" x-text="currentVideo.platform"></span>.</p>
+                            <a :href="currentVideo.source_url" target="_blank" rel="noopener noreferrer" 
+                               class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition">
+                                <span>Open Video On <span x-text="currentVideo.platform"></span></span>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Modal Forensic Footer & Details -->
+                <div class="p-5 bg-slate-950/80 border-t border-slate-800 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i>
+                            <span class="text-slate-300 font-bold" x-text="currentVideo?.author_name"></span>
+                            <span class="text-slate-500 font-mono" x-text="currentVideo?.author_handle"></span>
+                        </div>
+                        <div class="flex items-center gap-2 text-slate-400">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
+                            <span x-text="currentVideo?.location"></span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs sm:text-sm text-slate-300 leading-relaxed"
+                       x-show="currentVideo?.summary"
+                       x-text="currentVideo?.summary"></p>
+
+                    <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2 text-emerald-300">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                            <span x-text="currentVideo?.ai_feature || 'AI Anomaly Verified'"></span>
+                        </div>
+                        <a :href="currentVideo?.source_url" target="_blank" rel="noopener noreferrer" 
+                           class="text-emerald-400 hover:underline font-bold text-[11px] shrink-0">
+                            Original Source &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </section>
 
@@ -724,4 +1083,125 @@
         </div>
     </div>
 </section>
+
+@push('scripts')
+<script>
+    function videoEvidenceCarousel(initialVideos) {
+        return {
+            videos: Array.isArray(initialVideos) ? initialVideos : [],
+            activeFilter: 'All',
+            page: 0,
+            pageSize: 3,
+            modalOpen: false,
+            currentVideo: null,
+
+            init() {
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+            },
+
+            get filteredVideos() {
+                if (this.activeFilter === 'All') return this.videos;
+                return this.videos.filter(v => v.platform.toLowerCase() === this.activeFilter.toLowerCase());
+            },
+
+            get visibleVideos() {
+                const filtered = this.filteredVideos;
+                if (filtered.length <= this.pageSize) return filtered;
+                const start = this.page * this.pageSize;
+                return filtered.slice(start, start + this.pageSize);
+            },
+
+            setFilter(p) {
+                this.activeFilter = p;
+                this.page = 0;
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+            },
+
+            next() {
+                const maxPage = Math.ceil(this.filteredVideos.length / this.pageSize) - 1;
+                this.page = (this.page >= maxPage) ? 0 : this.page + 1;
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+            },
+
+            prev() {
+                const maxPage = Math.ceil(this.filteredVideos.length / this.pageSize) - 1;
+                this.page = (this.page <= 0) ? Math.max(0, maxPage) : this.page - 1;
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+            },
+
+            openModal(video) {
+                this.currentVideo = video;
+                this.modalOpen = true;
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
+            },
+
+            closeModal() {
+                this.modalOpen = false;
+                this.currentVideo = null;
+            },
+
+            getThumbnail(item) {
+                if (!item) return '/images/consumer-vigilance.jpg';
+
+                // 1. Explicit valid custom thumbnail
+                if (item.thumbnail_url && 
+                    !item.thumbnail_url.includes('photo-1584308666744-24d5c474f2ae') && 
+                    item.thumbnail_url !== '/images/hero-scanner.jpg') {
+                    return item.thumbnail_url;
+                }
+
+                // 2. YouTube auto-extract high-res thumbnail
+                const url = (item.source_url || item.embed_url || '');
+                const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/i);
+                if (ytMatch && ytMatch[1]) {
+                    return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+                }
+
+                // 3. Category Contextual Matching (No generic tablets everywhere!)
+                const text = ((item.title || '') + ' ' + (item.tag || '') + ' ' + (item.summary || '') + ' ' + (item.ai_feature || '')).toLowerCase();
+                if (text.includes('oil') || text.includes('engine') || text.includes('auto') || text.includes('motor')) {
+                    return '/images/counterfeit-oil.jpg';
+                }
+                if (text.includes('drink') || text.includes('traffic') || text.includes('tunde') || text.includes('commuter') || text.includes('bottle') || text.includes('water')) {
+                    return '/images/quick-intake-data.jpg';
+                }
+                if (text.includes('cosmetic') || text.includes('lotion') || text.includes('cream') || text.includes('bleach') || text.includes('baby')) {
+                    return '/images/counterfeit-cosmetics.jpg';
+                }
+                if (text.includes('rice') || text.includes('food') || text.includes('grain') || text.includes('sabon gari') || text.includes('seasoning')) {
+                    return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80';
+                }
+                if (text.includes('charger') || text.includes('phone') || text.includes('electronic') || text.includes('alaba') || text.includes('plug')) {
+                    return 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80';
+                }
+                if (text.includes('malaria') || text.includes('syrup') || text.includes('antibiotic') || text.includes('cough') || text.includes('pharma')) {
+                    return '/images/counterfeit-malaria.jpg';
+                }
+
+                return '/images/consumer-vigilance.jpg';
+            }
+        };
+    }
+</script>
+@endpush
 @endsection

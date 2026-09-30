@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Immediate synchronous theme detection to prevent any flash of light mode (FOUC) -->
+    <!-- Immediate synchronous theme detection to default to Dark Mode -->
     <script>
         (function() {
             try {
-                var saved = localStorage.getItem('fake9ja_theme');
-                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                // Default to dark mode or user preference
-                var isDark = saved === 'dark' || (!saved && (prefersDark || true));
-                if (isDark && saved !== 'light') {
-                    document.documentElement.classList.add('dark');
-                } else {
+                var saved = localStorage.getItem('fake9ja_theme') || localStorage.getItem('fake9ja-theme');
+                // Default is DARK — only go light if user explicitly chose light
+                if (saved === 'light') {
                     document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.classList.add('dark');
                 }
-            } catch (e) {}
+            } catch (e) {
+                document.documentElement.classList.add('dark');
+            }
         })();
     </script>
     <title>@yield('title', 'Fake9ja | Nigeria\'s Free Citizen Counterfeit Detection & Consumer Protection Radar')</title>
@@ -109,10 +109,16 @@
                     this.darkMode = !this.darkMode;
                     if (this.darkMode) {
                         document.documentElement.classList.add('dark');
-                        try { localStorage.setItem('fake9ja_theme', 'dark'); } catch(e){}
+                        try { 
+                            localStorage.setItem('fake9ja_theme', 'dark');
+                            localStorage.setItem('fake9ja-theme', 'dark');
+                        } catch(e){}
                     } else {
                         document.documentElement.classList.remove('dark');
-                        try { localStorage.setItem('fake9ja_theme', 'light'); } catch(e){}
+                        try { 
+                            localStorage.setItem('fake9ja_theme', 'light');
+                            localStorage.setItem('fake9ja-theme', 'light');
+                        } catch(e){}
                     }
                     setTimeout(() => {
                         document.documentElement.classList.remove('theme-transitioning');
