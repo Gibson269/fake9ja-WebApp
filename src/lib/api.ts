@@ -835,27 +835,29 @@ export const Fake9jaAPI = {
    */
   async storeVideoTestimony(payload: {
     title: string;
-    source_url?: string;
-    platform?: string;
-    author_name?: string;
-    author_handle?: string;
-    location?: string;
-    quote?: string;
-    summary?: string;
-    ai_feature?: string;
-    tag?: string;
-    duration?: string;
-    local_video_url?: string;
-    is_active?: boolean;
-    video_file?: File | null;
+    source_url?: string | undefined;
+    platform?: string | undefined;
+    author_name?: string | undefined;
+    author_handle?: string | undefined;
+    location?: string | undefined;
+    quote?: string | undefined;
+    summary?: string | undefined;
+    ai_feature?: string | undefined;
+    tag?: string | undefined;
+    duration?: string | undefined;
+    local_video_url?: string | undefined;
+    thumbnail_url?: string | undefined;
+    is_active?: boolean | undefined;
+    video_file?: File | null | undefined;
+    thumbnail_file?: File | null | undefined;
   }): Promise<{ success: boolean; data?: any; message: string }> {
     for (const ep of API_ENDPOINTS) {
       try {
         const formData = new FormData();
         Object.entries(payload).forEach(([k, v]) => {
           if (v !== undefined && v !== null) {
-            if (k === "video_file" && v instanceof File) {
-              formData.append("video_file", v);
+            if ((k === "video_file" || k === "thumbnail_file") && v instanceof File) {
+              formData.append(k, v);
             } else {
               formData.append(k, String(v));
             }

@@ -19,6 +19,7 @@ import {
   Tag,
   X,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SiteShell } from "@/components/site-shell";

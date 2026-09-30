@@ -60,7 +60,7 @@ export function VideoCarousel() {
     // Fetch live items from backend if available
     Fake9jaAPI.getVideoTestimonies()
       .then((serverItems) => {
-        if (!isMounted || !serverItems || serverItems.length === 0) return;
+        if (!isMounted || !serverItems || !Array.isArray(serverItems) || serverItems.length === 0) return;
         const normalized: VideoTestimony[] = serverItems.map((s: any) => {
           const parsed = parseVideoSource(s.source_url || s.local_video_url || "");
           return {
@@ -217,7 +217,9 @@ export function VideoCarousel() {
         tag: newItem.tag,
         duration: newItem.duration,
         local_video_url: newItem.localVideoUrl,
+        thumbnail_url: newItem.thumbnailUrl,
         video_file: selectedFile,
+        thumbnail_file: selectedThumbnail,
       });
     } catch {
       // Offline fallback

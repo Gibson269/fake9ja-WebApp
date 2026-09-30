@@ -2,23 +2,23 @@ export type VideoPlatform = "YouTube" | "Instagram" | "TikTok" | "Facebook" | "X
 
 export interface VideoTestimony {
   id: string | number;
-  type?: "instagram" | "local" | "embed" | "youtube" | "tiktok" | "facebook" | "organic";
+  type?: "instagram" | "local" | "embed" | "youtube" | "tiktok" | "facebook" | "organic" | undefined;
   title: string;
   authorName: string;
   authorHandle: string;
   sourceUrl: string;
   embedUrl: string;
-  localVideoUrl?: string;
-  thumbnailUrl?: string;
+  localVideoUrl?: string | undefined;
+  thumbnailUrl?: string | undefined;
   platform: VideoPlatform;
   location: string;
   summary: string;
   quote: string;
   date: string;
   tag: string;
-  duration?: string;
-  aiFeature?: string;
-  is_active?: boolean;
+  duration?: string | undefined;
+  aiFeature?: string | undefined;
+  is_active?: boolean | undefined;
 }
 
 export function parseVideoSource(rawUrl: string): {
