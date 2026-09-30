@@ -36,8 +36,14 @@ export function ThemeToggle() {
   const [dark, setDark] = useState(true);
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setDark(isDark);
+    const saved = localStorage.getItem("fake9ja-theme") || localStorage.getItem("fake9ja_theme");
+    if (saved === "light") {
+      document.documentElement.classList.remove("dark");
+      setDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      setDark(true);
+    }
   }, []);
 
   const toggle = () => {
