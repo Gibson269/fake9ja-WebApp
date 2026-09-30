@@ -13,6 +13,27 @@ class AdminDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_guest_sees_lightweight_admin_login_page(): void
+    {
+        $response = $this->get('/admin');
+
+        $response->assertOk();
+        $response->assertSee('Admin Login');
+        $response->assertSee('autocomplete="username"', false);
+        $response->assertDontSee('cdn.tailwindcss.com');
+    }
+
+    public function test_admin_login_redirects_to_dashboard_and_starts_session(): void
+    {
+        $response = $this->post('/admin/login', [
+            'email' => 'admin@fake9ja.ng',
+            'password' => 'admin123',
+        ]);
+
+        $response->assertRedirect('/admin');
+        $response->assertSessionHas('fake9ja_admin_logged', true);
+    }
+
     public function test_admin_can_access_dashboard_when_logged_in(): void
     {
         $response = $this->withSession(['fake9ja_admin_logged' => true])
