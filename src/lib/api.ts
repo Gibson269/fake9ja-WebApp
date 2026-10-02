@@ -3,11 +3,17 @@
  * Connects directly to the Laravel 11 Backend (SQLite / MySQL) with persistent storage sync
  */
 
-const API_ENDPOINTS = [
-  "/api",
-  "http://127.0.0.1:8000/api",
-  "http://127.0.0.1:8001/api",
-];
+const isBrowser = typeof window !== "undefined";
+const isLocalhost =
+  isBrowser &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.endsWith(".local"));
+
+const API_ENDPOINTS = isLocalhost
+  ? ["/api", "http://127.0.0.1:8000/api", "http://127.0.0.1:8001/api"]
+  : ["/api"];
+
 
 export interface ReportItem {
   id: number | string;
@@ -254,8 +260,17 @@ async function tryFetchJson(path: string, options?: RequestInit): Promise<any> {
   for (const base of API_ENDPOINTS) {
     try {
       const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
-      const res = await fetch(url, options);
-      if (res.ok) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const res = await fetch(url, {
+        ...options,
+        signal: options?.signal || controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const contentType = res.headers.get("content-type") || "";
+      if (res.ok && contentType.includes("json")) {
         return await res.json();
       }
     } catch {
@@ -555,24 +570,35 @@ export const Fake9jaAPI = {
         body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
       });
       if (res && res.success) {
-        localStorage.setItem("fake9ja_admin_token", res.token || "fake9ja_session_ok");
-        localStorage.setItem("fake9ja_admin_user", JSON.stringify(res.user));
+        try {
+          localStorage.setItem("fake9ja_admin_token", res.token || "fake9ja_session_ok");
+          localStorage.setItem("fake9ja_admin_user", JSON.stringify(res.user));
+        } catch {
+          // localStorage disabled in environment
+        }
         return res;
       }
     } catch {
       // Fallback local verification
     }
 
-    if (cleanEmail === "admin@fake9ja.ng" && (cleanPassword === "admin123" || cleanPassword === "admin9ja2026")) {
+    if (
+      (cleanEmail === "admin@fake9ja.ng" || cleanEmail === "admin@fake9ja.com") &&
+      (cleanPassword === "admin123" || cleanPassword === "admin9ja2026")
+    ) {
       const dummyUser = {
         name: "Dr. Amina Bello",
-        email: "admin@fake9ja.ng",
+        email: cleanEmail,
         role: "Chief Inspector & Anti-Counterfeit Director",
         badge: "NAFDAC / SON Liaison Commander",
       };
       const token = "fake9ja_token_sec_" + Date.now();
-      localStorage.setItem("fake9ja_admin_token", token);
-      localStorage.setItem("fake9ja_admin_user", JSON.stringify(dummyUser));
+      try {
+        localStorage.setItem("fake9ja_admin_token", token);
+        localStorage.setItem("fake9ja_admin_user", JSON.stringify(dummyUser));
+      } catch {
+        // localStorage disabled
+      }
       return {
         success: true,
         token,

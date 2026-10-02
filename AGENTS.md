@@ -1,10 +1,8 @@
-<!-- LOVABLE:BEGIN -->
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
-<!-- LOVABLE:END -->
+# Fake9ja Sentinel Project
+
+Citizen-powered counterfeit reporting and safety verification network.
+
+## Engineering Guidelines
+- Maintain stability and clean code standards.
+- Keep the application fast, performant, and resilient.
+- Ensure all API endpoints and database handlers fail gracefully with local fallbacks.

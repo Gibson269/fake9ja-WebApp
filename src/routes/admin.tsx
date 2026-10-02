@@ -77,9 +77,9 @@ import {
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Fake9ja Sentinel ΓÇö Chief Inspector Intelligence Command" },
+      { title: "Fake9ja Sentinel — Chief Inspector Intelligence Command" },
       { name: "description", content: "Dedicated administrative command desk for product triage, laboratory findings, and public counterfeit broadcast." },
-      { property: "og:title", content: "Fake9ja ΓÇö Admin Intelligence Command" },
+      { property: "og:title", content: "Fake9ja — Admin Intelligence Command" },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -90,7 +90,11 @@ type AdminTab = "overview" | "triage" | "publish" | "videos" | "hotspots" | "bra
 
 function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return Boolean(localStorage.getItem("fake9ja_admin_token"));
+    try {
+      return Boolean(localStorage.getItem("fake9ja_admin_token"));
+    } catch {
+      return false;
+    }
   });
 
   if (!isAuthenticated) {
@@ -110,26 +114,35 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  const handleLogin = async (e?: React.FormEvent) => {
+  const handleLogin = async (e?: React.FormEvent, directEmail?: string, directPassword?: string) => {
     if (e) e.preventDefault();
     setAuthError("");
 
-    if (!email.trim() || !password.trim()) {
+    const targetEmail = (directEmail !== undefined ? directEmail : email).trim();
+    const targetPassword = (directPassword !== undefined ? directPassword : password).trim();
+
+    if (!targetEmail || !targetPassword) {
       setAuthError("Both email and authentication password are required.");
       toast.error("Please enter inspector credentials.");
       return;
     }
 
-    setSubmitting(true);
-    const res = await Fake9jaAPI.adminLogin(email, password);
-    setSubmitting(false);
+    try {
+      setSubmitting(true);
+      const res = await Fake9jaAPI.adminLogin(targetEmail, targetPassword);
+      setSubmitting(false);
 
-    if (res.success) {
-      toast.success(res.message);
-      onLoginSuccess();
-    } else {
-      setAuthError(res.message || "Access Denied: Invalid Chief Inspector credentials.");
-      toast.error("Access Denied: Invalid Chief Inspector credentials.");
+      if (res.success) {
+        toast.success(res.message);
+        onLoginSuccess();
+      } else {
+        setAuthError(res.message || "Access Denied: Invalid Chief Inspector credentials.");
+        toast.error("Access Denied: Invalid Chief Inspector credentials.");
+      }
+    } catch (err: any) {
+      setSubmitting(false);
+      setAuthError("Authentication check failed. Please check network connection.");
+      toast.error("Inspector authentication error.");
     }
   };
 
@@ -138,6 +151,12 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     setPassword("admin123");
     setAuthError("");
     toast.info("Inspector credentials auto-filled. Click Unlock to enter.");
+  };
+
+  const handleInstantDemoLogin = () => {
+    setEmail("admin@fake9ja.ng");
+    setPassword("admin123");
+    handleLogin(undefined, "admin@fake9ja.ng", "admin123");
   };
 
   return (
@@ -189,13 +208,23 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
             <span className="flex items-center gap-1.5">
               <KeyRound className="size-3.5 text-emerald-400" /> Authorized Admin Key
             </span>
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              className="text-[11px] font-extrabold text-emerald-400 hover:underline cursor-pointer"
-            >
-              Fill Credentials
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleFillDemo}
+                className="text-[11px] font-extrabold text-emerald-400 hover:underline cursor-pointer"
+              >
+                Fill Credentials
+              </button>
+              <span className="text-slate-600">•</span>
+              <button
+                type="button"
+                onClick={handleInstantDemoLogin}
+                className="text-[11px] font-extrabold text-white bg-emerald-600 hover:bg-emerald-500 px-2 py-0.5 rounded-md cursor-pointer transition"
+              >
+                Instant Unlock
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300 mt-2 font-mono">
             <div>
@@ -249,12 +278,13 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
               <Input
                 type={showPassword ? "text" : "password"}
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setAuthError("");
                 }}
-                placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
+                placeholder="••••••••••••"
                 className="h-11 rounded-xl border-slate-700 bg-slate-950 pl-10 text-xs text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500"
               />
             </div>
@@ -278,8 +308,8 @@ function AdminLoginGate({ onLoginSuccess }: { onLoginSuccess: () => void }) {
         </form>
 
         <div className="mt-6 pt-5 border-t border-slate-800 text-center text-xs text-slate-400">
-          <Link to="/" className="inline-flex items-center gap-1 hover:text-white transition-colors">
-            ΓåÉ Return to Citizen Public Radar
+          <Link to="/" className="inline-flex items-center gap-1.5 hover:text-white transition-colors">
+            <span>←</span> Return to Citizen Public Radar
           </Link>
         </div>
       </motion.div>
@@ -330,7 +360,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     issue_type: "Cloned Packaging & Inactive Formulation",
     details: "Purchased blister pack lacked hologram seal and failed spectroscopic dissolution testing.",
     reviewer_note: "Confirmed counterfeit: 0% active therapeutic ingredient. Immediate hazardous adulterant alert.",
-    purchase_price: "Γéª2,400",
+    purchase_price: "₦2,400",
     risk_level: "high" as "low" | "medium" | "high",
     preset_image: "/images/counterfeit-malaria.jpg",
   });
@@ -358,45 +388,50 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Fetch all intelligence data
   const refreshAllData = async () => {
     setLoadingReports(true);
-    const [fetchedReports, fetchedWatches, fetchedHotspots, fetchedVideos] = await Promise.all([
-      Fake9jaAPI.getReports(),
-      Fake9jaAPI.getBrandWatches(),
-      Fake9jaAPI.getHotspots(),
-      Fake9jaAPI.getVideoTestimonies().catch(() => []),
-    ]);
-    setReports(fetchedReports);
-    setBrandWatches(fetchedWatches);
-    setHotspots(fetchedHotspots);
-    if (fetchedVideos && fetchedVideos.length > 0) {
-      const normalized: VideoTestimony[] = fetchedVideos.map((s: any) => {
-        const parsed = parseVideoSource(s.source_url || s.local_video_url || "");
-        return {
-          id: s.id,
-          type: parsed.inferredType,
-          title: s.title,
-          authorName: s.author_name || "Citizen Sentinel",
-          authorHandle: s.author_handle || "@citizen",
-          sourceUrl: s.source_url || "#",
-          embedUrl: s.embed_url || parsed.embedUrl,
-          localVideoUrl: s.local_video_url || parsed.localVideoUrl,
-          thumbnailUrl: getVideoThumbnail({ title: s.title, thumbnailUrl: s.thumbnail_url, sourceUrl: s.source_url, tag: s.tag, summary: s.summary }),
-          platform: (s.platform || parsed.platform) as VideoPlatform,
-          location: s.location || "Nigeria",
-          summary: s.summary || "",
-          quote: s.quote || "",
-          date: s.created_at ? new Date(s.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Recent",
-          tag: s.tag || "Citizen Alert",
-          duration: s.duration || "1:00",
-          aiFeature: s.ai_feature || "",
-        };
-      });
-      const existing = loadStoredTestimonies();
-      const existingIds = new Set(normalized.map((n) => String(n.id)));
-      const merged = [...normalized, ...existing.filter((e) => !existingIds.has(String(e.id)))];
-      setVideoTestimonies(merged);
-      saveStoredTestimonies(merged);
+    try {
+      const [fetchedReports, fetchedWatches, fetchedHotspots, fetchedVideos] = await Promise.all([
+        Fake9jaAPI.getReports(),
+        Fake9jaAPI.getBrandWatches(),
+        Fake9jaAPI.getHotspots(),
+        Fake9jaAPI.getVideoTestimonies().catch(() => []),
+      ]);
+      setReports(Array.isArray(fetchedReports) ? fetchedReports : []);
+      setBrandWatches(Array.isArray(fetchedWatches) ? fetchedWatches : []);
+      setHotspots(Array.isArray(fetchedHotspots) ? fetchedHotspots : []);
+      if (fetchedVideos && fetchedVideos.length > 0) {
+        const normalized: VideoTestimony[] = fetchedVideos.map((s: any) => {
+          const parsed = parseVideoSource(s.source_url || s.local_video_url || "");
+          return {
+            id: s.id,
+            type: parsed.inferredType,
+            title: s.title || "Video Alert",
+            authorName: s.author_name || "Citizen Sentinel",
+            authorHandle: s.author_handle || "@citizen",
+            sourceUrl: s.source_url || "#",
+            embedUrl: s.embed_url || parsed.embedUrl,
+            localVideoUrl: s.local_video_url || parsed.localVideoUrl,
+            thumbnailUrl: getVideoThumbnail({ title: s.title, thumbnailUrl: s.thumbnail_url, sourceUrl: s.source_url, tag: s.tag, summary: s.summary }),
+            platform: (s.platform || parsed.platform) as VideoPlatform,
+            location: s.location || "Nigeria",
+            summary: s.summary || "",
+            quote: s.quote || "",
+            date: s.created_at ? new Date(s.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Recent",
+            tag: s.tag || "Citizen Alert",
+            duration: s.duration || "1:00",
+            aiFeature: s.ai_feature || "",
+          };
+        });
+        const existing = loadStoredTestimonies();
+        const existingIds = new Set(normalized.map((n) => String(n.id)));
+        const merged = [...normalized, ...existing.filter((e) => !existingIds.has(String(e.id)))];
+        setVideoTestimonies(merged);
+        saveStoredTestimonies(merged);
+      }
+    } catch (err) {
+      console.error("Failed to load admin intelligence data", err);
+    } finally {
+      setLoadingReports(false);
     }
-    setLoadingReports(false);
   };
 
   useEffect(() => {
@@ -637,18 +672,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     ];
 
     const rows = reports.map((r) => [
-      `"${r.reference_id}"`,
-      `"${r.product_name.replace(/"/g, '""')}"`,
+      `"${r.reference_id || "N/A"}"`,
+      `"${(r.product_name || "N/A").replace(/"/g, '""')}"`,
       `"${(r.brand || "N/A").replace(/"/g, '""')}"`,
-      `"${r.category}"`,
-      `"${r.state}"`,
-      `"${r.market_address.replace(/"/g, '""')}"`,
-      `"${r.issue_type.replace(/"/g, '""')}"`,
+      `"${r.category || "N/A"}"`,
+      `"${r.state || "N/A"}"`,
+      `"${(r.market_address || "N/A").replace(/"/g, '""')}"`,
+      `"${(r.issue_type || "N/A").replace(/"/g, '""')}"`,
       `"${r.purchase_price || "N/A"}"`,
-      `"${r.status}"`,
-      `"${r.risk_level}"`,
+      `"${r.status || "N/A"}"`,
+      `"${r.risk_level || "N/A"}"`,
       `"${r.is_priority ? "YES" : "NO"}"`,
-      `"${r.created_at}"`,
+      `"${r.created_at || "N/A"}"`,
     ]);
 
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
@@ -664,12 +699,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   // Filtered reports for Triage tab
   const filteredReports = reports.filter((r) => {
-    const q = search.toLowerCase();
+    const q = (search || "").toLowerCase().trim();
+    const productName = (r.product_name || "").toLowerCase();
+    const refId = (r.reference_id || "").toLowerCase();
+    const market = (r.market_address || "").toLowerCase();
+    const brand = (r.brand || "").toLowerCase();
+
     const matchSearch =
-      r.product_name.toLowerCase().includes(q) ||
-      r.reference_id.toLowerCase().includes(q) ||
-      r.market_address.toLowerCase().includes(q) ||
-      (r.brand && r.brand.toLowerCase().includes(q));
+      !q ||
+      productName.includes(q) ||
+      refId.includes(q) ||
+      market.includes(q) ||
+      brand.includes(q);
 
     const matchStatus = filterStatus === "all" || r.status === filterStatus;
     const matchRisk = filterRisk === "all" || r.risk_level === filterRisk;
@@ -801,8 +842,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               variant="destructive"
               size="sm"
               onClick={() => {
-                localStorage.removeItem("fake9ja_admin_token");
-                localStorage.removeItem("fake9ja_admin_user");
+                try {
+                  localStorage.removeItem("fake9ja_admin_token");
+                  localStorage.removeItem("fake9ja_admin_user");
+                } catch {
+                  // ignore
+                }
                 toast.info("Chief Inspector session terminated.");
                 onLogout();
               }}
@@ -848,7 +893,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {activeTab === "export" && "Law Enforcement & Regulatory Export Station"}
               </h2>
               <p className="hidden sm:block text-xs text-slate-400">
-                Connected to Fake9ja Citizen Defense Radar ΓÇó Live SQLite/MySQL Synced
+                Connected to Fake9ja Citizen Defense Radar • Live SQLite/MySQL Synced
               </p>
             </div>
           </div>
@@ -986,7 +1031,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       onClick={() => setActiveTab("triage")}
                       className="rounded-xl h-8 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white"
                     >
-                      Review Cases ΓåÆ
+                      Review Cases →
                     </Button>
                   </div>
                 </section>
@@ -1261,7 +1306,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   onClick={() => setActiveTab("triage")}
                   className="rounded-xl text-xs font-bold border-slate-800 bg-slate-950 text-slate-300 hover:text-white shrink-0"
                 >
-                  ΓåÉ Back to Triage Queue
+                  ← Back to Triage Queue
                 </Button>
               </div>
 
@@ -1379,7 +1424,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <Input
                         value={publishForm.purchase_price}
                         onChange={(e) => setPublishForm({ ...publishForm, purchase_price: e.target.value })}
-                        placeholder="e.g. Γéª2,400"
+                        placeholder="e.g. ₦2,400"
                         className="h-11 rounded-xl border-slate-800 bg-slate-950 text-xs text-white placeholder:text-slate-500 focus:border-rose-500 focus:ring-rose-500"
                       />
                     </div>
@@ -1517,7 +1562,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             VERIFIED FAKE
                           </span>
                           <span className="bg-emerald-500/20 backdrop-blur border border-emerald-400/30 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                            ΓÜí Fast-Track Radar
+                            ⚡ Fast-Track Radar
                           </span>
                         </div>
 
@@ -1545,7 +1590,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </h4>
 
                         <p className="text-xs text-slate-300 leading-relaxed">
-                          <strong className="text-white">Observed Anomaly:</strong> ΓÇ£{publishForm.issue_type}ΓÇ¥
+                          <strong className="text-white">Observed Anomaly:</strong> “{publishForm.issue_type}”
                         </p>
 
                         <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-2.5 text-[11px] text-slate-300">
@@ -2043,17 +2088,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     WELCOME30
                   </h4>
                   <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                    Official 30% discount applied to the Γéª5,000 Priority Fast-Track SLA fee and Brand Watch Sentinel subscriptions.
+                    Official 30% discount applied to the ₦5,000 Priority Fast-Track SLA fee and Brand Watch Sentinel subscriptions.
                   </p>
 
                   <div className="mt-6 rounded-2xl bg-slate-950/80 p-3.5 border border-slate-800 text-xs space-y-1.5 font-mono">
                     <div className="flex justify-between text-slate-400">
                       <span>Base Fast-Track:</span>
-                      <span className="line-through text-slate-500">Γéª5,000</span>
+                      <span className="line-through text-slate-500">₦5,000</span>
                     </div>
                     <div className="flex justify-between text-emerald-400 font-bold">
                       <span>Discounted Rate:</span>
-                      <span>Γéª3,500</span>
+                      <span>₦3,500</span>
                     </div>
                   </div>
                 </div>
@@ -2255,7 +2300,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     Alleged Defect / Anomaly
                   </p>
                   <p className="mt-1 text-sm font-semibold text-white">
-                    ΓÇ£{selectedReport.issue_type}ΓÇ¥
+                    “{selectedReport.issue_type}”
                   </p>
                   {selectedReport.details && (
                     <p className="mt-2 text-slate-300 leading-relaxed font-normal">
@@ -2360,7 +2405,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="size-4 text-emerald-400" />
                   <span className="font-mono text-xs font-bold text-white">
-                    Inspector Evidence Viewer ΓÇó Forensic Packaging Inspection
+                    Inspector Evidence Viewer • Forensic Packaging Inspection
                   </span>
                 </div>
                 <Button
