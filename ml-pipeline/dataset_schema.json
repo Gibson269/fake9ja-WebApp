@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Fake9jaCounterfeitDatasetItem",
+  "description": "Standard schema for a single labeled data sample used to train the anti-counterfeit model",
+  "type": "object",
+  "required": [
+    "sample_id",
+    "reference_id",
+    "product_name",
+    "category",
+    "ground_truth_label",
+    "images"
+  ],
+  "properties": {
+    "sample_id": {
+      "type": "string",
+      "description": "Unique identifier for the training sample (e.g., FAKE9JA-SAMPLE-00123)"
+    },
+    "reference_id": {
+      "type": "string",
+      "description": "Original citizen report reference ID (e.g., EIE-NG-248193)"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Brand name and formulation of the product"
+    },
+    "brand": {
+      "type": ["string", "null"],
+      "description": "Manufacturer or claimed brand owner"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["Medicines", "Cosmetics", "Automotive", "Food & drinks", "Electronics", "General"]
+    },
+    "ground_truth_label": {
+      "type": "string",
+      "enum": ["verified_original", "verified_fake"],
+      "description": "Target classification label for model supervision"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "purchase_price_ngn": {
+      "type": ["number", "null"],
+      "description": "Amount paid in Nigerian Naira (NGN)"
+    },
+    "market_address": {
+      "type": "string",
+      "description": "Market or vendor physical purchase location"
+    },
+    "state": {
+      "type": "string",
+      "description": "State in Nigeria where product was encountered"
+    },
+    "defect_tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "defect_tampered_seal",
+          "defect_fake_hologram",
+          "defect_altered_expiry",
+          "defect_spelling_error",
+          "defect_blurred_barcode",
+          "defect_color_deviation",
+          "defect_price_anomaly",
+          "none"
+        ]
+      }
+    },
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["file_url", "modality"],
+        "properties": {
+          "file_url": {
+            "type": "string",
+            "description": "Relative or absolute URI to the image asset"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "front_packaging",
+              "seal_hologram",
+              "barcode_qr",
+              "batch_expiry",
+              "back_ingredients",
+              "unspecified"
+            ]
+          },
+          "bounding_boxes": {
+            "type": "array",
+            "description": "Defect bounding boxes in normalized coordinates [x_center, y_center, width, height]",
+            "items": {
+              "type": "object",
+              "properties": {
+                "class": { "type": "string" },
+                "bbox": {
+                  "type": "array",
+                  "items": { "type": "number" },
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reviewer_note": {
+      "type": ["string", "null"],
+      "description": "Expert verification notes explaining why it was marked genuine or fake"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

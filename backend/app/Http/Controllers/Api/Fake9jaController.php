@@ -928,5 +928,74 @@ class Fake9jaController extends Controller
             'local_video_url' => $localVideoUrl,
         ];
     }
+
+    /**
+     * Machine Learning Dataset Export Endpoint
+     * Serves ground-truth labeled samples (verified_fake vs verified_original)
+     * formatted for Computer Vision / Multimodal model training pipelines.
+     */
+    public function exportMlDataset(Request $request)
+    {
+        $query = Report::with('media');
+
+        if (!$request->boolean('include_all')) {
+            $query->whereIn('status', ['verified_fake', 'verified_original']);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', 'like', "%{$request->category}%");
+        }
+
+        $reports = $query->latest()->get()->map(function ($r) {
+            $rawPrice = preg_replace('/[^0-9.]/', '', (string)$r->purchase_price);
+            $numericPrice = is_numeric($rawPrice) ? (float)$rawPrice : null;
+
+            $images = $r->media->map(function ($m, $index) {
+                $modality = match($index) {
+                    0 => 'front_packaging',
+                    1 => 'seal_hologram',
+                    2 => 'barcode_qr',
+                    3 => 'batch_expiry',
+                    default => 'back_ingredients',
+                };
+
+                return [
+                    'file_url' => '/storage/' . $m->file_path,
+                    'file_type' => $m->file_type,
+                    'modality' => $modality,
+                    'bounding_boxes' => [],
+                ];
+            });
+
+            return [
+                'sample_id' => 'FAKE9JA-' . $r->reference_id,
+                'reference_id' => $r->reference_id,
+                'product_name' => $r->product_name,
+                'brand' => $r->brand,
+                'category' => $r->category,
+                'ground_truth_label' => $r->status,
+                'risk_level' => $r->risk_level,
+                'purchase_price_ngn' => $numericPrice,
+                'market_address' => $r->market_address,
+                'state' => $r->state,
+                'issue_type' => $r->issue_type,
+                'details' => $r->details,
+                'defect_tags' => $r->status === 'verified_fake' ? ['defect_tampered_seal', 'defect_fake_hologram'] : [],
+                'images' => $images,
+                'reviewer_note' => $r->reviewer_note,
+                'created_at' => $r->created_at ? $r->created_at->toISOString() : null,
+            ];
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'version' => '1.0.0',
+            'dataset_name' => 'Fake9ja Anti-Counterfeit Benchmark',
+            'total_samples' => $reports->count(),
+            'classes' => ['verified_original', 'verified_fake'],
+            'data' => $reports,
+        ]);
+    }
 }
+
 

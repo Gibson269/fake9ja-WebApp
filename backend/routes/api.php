@@ -25,3 +25,6 @@ Route::get('/video-testimonies', [Fake9jaController::class, 'getVideoTestimonies
 Route::post('/admin/video-testimonies', [Fake9jaController::class, 'storeVideoTestimony']);
 Route::put('/admin/video-testimonies/{id}', [Fake9jaController::class, 'updateVideoTestimony']);
 Route::delete('/admin/video-testimonies/{id}', [Fake9jaController::class, 'deleteVideoTestimony']);
+
+// Machine Learning Dataset Ingestion & Export (Supervised Training Flywheel)
+Route::get('/ml/dataset/export', [Fake9jaController::class, 'exportMlDataset']);

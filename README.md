@@ -1,59 +1,92 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Fake9ja Sentinel 🛡️
+> **Citizen-Powered Counterfeit Intelligence Network & Anti-Counterfeit AI Training Pipeline**
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![React](https://img.shields.io/badge/Frontend-React_19_+_Vite-61DAFB?logo=react&logoColor=black)](./frontend)
+[![Laravel](https://img.shields.io/badge/Backend-Laravel_12_REST_API-FF2D20?logo=laravel&logoColor=white)](./backend)
+[![Dataset Pipeline](https://img.shields.io/badge/ML_Pipeline-Dataset_Curation-0052CC?logo=python&logoColor=white)](./ml-pipeline)
+[![Architecture](https://img.shields.io/badge/Architecture-Decoupled_Monorepo-000000)](./SOURCE_OF_TRUTH.md)
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🎯 Strategic Mission
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Fake9ja Sentinel is engineered to solve the counterfeit crisis in Nigerian commerce (medicines, cosmetics, foods, motor oils, and electronics). 
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+It functions as:
+1. **A Free Public Incident & Verification Network:** Allowing shoppers and pharmacists to report counterfeit items, inspect hotspot markets, and track case resolution.
+2. **An AI Model Data Gathering Engine:** Systematically capturing, validating, and annotating multi-perspective product imagery (packaging, hologram seals, barcodes, and laser batch codes) to build and fine-tune machine learning models that aid consumers in identifying genuine vs fake products.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 📂 Repository Structure
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```
+fake9ja/
+├── SOURCE_OF_TRUTH.md     # 📖 Canonical Source of Truth (Architecture, Schemas, ML specs)
+├── GUIDE.md               # 🚀 Simple Developer & Contributor Guide
+├── README.md              # 📌 Project Overview (this document)
+├── AGENTS.md              # 🤖 Agent & Contributor Engineering Guidelines
+├── package.json           # 🎛️ Root monorepo orchestrator
+├── netlify.toml           # 🌐 Edge deployment configuration
+│
+├── frontend/              # 💻 React 19 Client SPA
+│   ├── src/               # Components, routes, resilient API client
+│   ├── public/            # Static image assets & fallbacks
+│   ├── vite.config.ts     # Vite bundler & backend proxy config
+│   └── package.json       # React dependencies
+│
+├── backend/               # ⚙️ Laravel 12 Headless REST API
+│   ├── app/               # Controllers, Models (Report, Hotspot, BrandWatch)
+│   ├── database/          # Migrations & Nigerian market seeders
+│   ├── routes/api.php     # REST endpoints & /api/ml/dataset/export
+│   └── artisan            # Laravel CLI runner
+│
+└── ml-pipeline/           # 🧠 ML Model Dataset Pipeline
+    ├── DATASET_GUIDELINES.md # 5-Point photo capture & labeling taxonomy SOP
+    ├── dataset_schema.json   # JSON schema specification for dataset exports
+    └── export_dataset.py     # Python exporter for CV/ViT training
+```
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ⚡ Quickstart
 
-### Premium Partners
+### 1. Run the Frontend (Instant, zero database required)
+```bash
+npm run dev:frontend
+```
+Open [http://localhost:5173](http://localhost:5173). The frontend includes resilient local fallbacks, realistic seed data, and a browser-based storage engine for immediate testing.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 2. Run the Full Stack (Laravel API + Frontend)
+```bash
+# Terminal 1: Laravel API
+cd backend
+php artisan serve
 
-## Contributing
+# Terminal 2: React Frontend
+npm run dev:frontend
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 3. Export Data for Machine Learning
+```bash
+python ml-pipeline/export_dataset.py --api-url http://127.0.0.1:8000/api --output ./training_dataset
+```
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🔑 Default Admin Credentials
+- **Desk URL:** [http://localhost:5173/admin](http://localhost:5173/admin)
+- **Email:** `admin@fake9ja.ng`
+- **Password:** `admin123`
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 📚 Essential Reading
+- **[Single Source of Truth (SOURCE_OF_TRUTH.md)](./SOURCE_OF_TRUTH.md):** Complete specifications, API contracts, and the 5-point image modality breakdown.
+- **[Developer Guide (GUIDE.md)](./GUIDE.md):** How the citizen-to-model data flow works.
+- **[Dataset Guidelines (ml-pipeline/DATASET_GUIDELINES.md)](./ml-pipeline/DATASET_GUIDELINES.md):** Standard operating procedures for photo capture and defect tagging.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## ⚖️ License
+Licensed under the [MIT License](LICENSE).

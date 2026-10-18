@@ -58,7 +58,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import { BrandMark } from "@/components/brand-mark";
 import { Badge } from "@/components/ui/badge";
@@ -697,32 +697,50 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     toast.success("NAFDAC/Law Enforcement Incident CSV exported successfully!");
   };
 
-  // Filtered reports for Triage tab
-  const filteredReports = reports.filter((r) => {
+  // Memoized Filtered reports for Triage tab
+  const filteredReports = useMemo(() => {
     const q = (search || "").toLowerCase().trim();
-    const productName = (r.product_name || "").toLowerCase();
-    const refId = (r.reference_id || "").toLowerCase();
-    const market = (r.market_address || "").toLowerCase();
-    const brand = (r.brand || "").toLowerCase();
+    return reports.filter((r) => {
+      const productName = (r.product_name || "").toLowerCase();
+      const refId = (r.reference_id || "").toLowerCase();
+      const market = (r.market_address || "").toLowerCase();
+      const brand = (r.brand || "").toLowerCase();
 
-    const matchSearch =
-      !q ||
-      productName.includes(q) ||
-      refId.includes(q) ||
-      market.includes(q) ||
-      brand.includes(q);
+      const matchSearch =
+        !q ||
+        productName.includes(q) ||
+        refId.includes(q) ||
+        market.includes(q) ||
+        brand.includes(q);
 
-    const matchStatus = filterStatus === "all" || r.status === filterStatus;
-    const matchRisk = filterRisk === "all" || r.risk_level === filterRisk;
-    return matchSearch && matchStatus && matchRisk;
-  });
+      const matchStatus = filterStatus === "all" || r.status === filterStatus;
+      const matchRisk = filterRisk === "all" || r.risk_level === filterRisk;
+      return matchSearch && matchStatus && matchRisk;
+    });
+  }, [reports, search, filterStatus, filterRisk]);
 
-  // Calculate high-level stats
-  const totalReportsCount = reports.length;
-  const verifiedFakeCount = reports.filter((r) => r.status === "verified_fake").length;
-  const underReviewCount = reports.filter((r) => r.status === "under_review" || r.status === "received").length;
-  const highRiskCount = reports.filter((r) => r.risk_level === "high").length;
-  const priorityCount = reports.filter((r) => r.is_priority).length;
+  // Memoized high-level stats
+  const { totalReportsCount, verifiedFakeCount, underReviewCount, highRiskCount, priorityCount } = useMemo(() => {
+    let verifiedFake = 0;
+    let underReview = 0;
+    let highRisk = 0;
+    let priority = 0;
+
+    for (const r of reports) {
+      if (r.status === "verified_fake") verifiedFake++;
+      if (r.status === "under_review" || r.status === "received") underReview++;
+      if (r.risk_level === "high") highRisk++;
+      if (r.is_priority) priority++;
+    }
+
+    return {
+      totalReportsCount: reports.length,
+      verifiedFakeCount: verifiedFake,
+      underReviewCount: underReview,
+      highRiskCount: highRisk,
+      priorityCount: priority,
+    };
+  }, [reports]);
 
   const sidebarNavItems: { id: AdminTab; label: string; icon: any; count?: number; highlight?: boolean }[] = [
     { id: "overview", label: "Intelligence Overview", icon: Home },

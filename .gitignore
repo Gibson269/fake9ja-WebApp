@@ -22,3 +22,12 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+dist
+frontend/dist
+ml-pipeline/dataset_export
+ml-pipeline/training_dataset
+backend/.env
+frontend/node_modules
+node_modules
+
+
