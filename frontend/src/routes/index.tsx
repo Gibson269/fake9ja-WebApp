@@ -10,6 +10,7 @@ import {
   Building2,
   Car,
   Check,
+  CheckCircle2,
   ChevronDown,
   CircleAlert,
   CircleCheck,
@@ -49,7 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Reveal } from "@/components/motion-kit";
 import { SiteShell } from "@/components/site-shell";
 import { VideoCarousel } from "@/components/video-carousel";
-import { Fake9jaAPI, type ReportItem } from "@/lib/api";
+import { Fake9jaAPI, saveLastSubmittedReport, getLastSubmittedReportId, type ReportItem } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -109,6 +110,7 @@ function Home() {
 
   // FAQ state
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [lastReportId, setLastReportId] = useState<string | null>(null);
 
   // Live Public Stats & Ticker Data
   const [liveStats, setLiveStats] = useState<{
@@ -173,6 +175,8 @@ function Home() {
 
   useEffect(() => {
     fetchLiveData();
+    const last = getLastSubmittedReportId();
+    if (last) setLastReportId(last);
   }, []);
 
   // Quick 3-data submission handler
@@ -200,6 +204,8 @@ function Home() {
 
       setIsSubmittingQuick(false);
       setQuickSuccessRef(res.reference_id);
+      setLastReportId(res.reference_id);
+      saveLastSubmittedReport(res.reference_id, quickProductName.trim() || `${quickProductType} Item`);
       toast.success("Incident data securely logged in AI training dataset!");
       // Automatically refresh live telemetry counts from backend
       fetchLiveData();
@@ -207,17 +213,20 @@ function Home() {
       setIsSubmittingQuick(false);
       const fallback = `EIE-NG-${Math.floor(100000 + Math.random() * 899999)}`;
       setQuickSuccessRef(fallback);
+      setLastReportId(fallback);
+      saveLastSubmittedReport(fallback, quickProductName.trim() || `${quickProductType} Item`);
       toast.success("Incident captured in local safety cache!");
     }
   };
 
   const handleTrackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!trackRef.trim()) {
-      toast.error("Please enter a tracking ID (e.g., EIE-NG-847291)");
+    const target = trackRef.trim() || lastReportId;
+    if (!target) {
+      toast.error("Please enter a tracking ID (e.g., EIE-NG-XXXXXX)");
       return;
     }
-    navigate({ to: "/track", search: { ref: trackRef.trim() } });
+    navigate({ to: "/track", search: { ref: target.toUpperCase() } });
   };
 
   const copyRefToClipboard = (ref: string) => {
@@ -332,9 +341,13 @@ function Home() {
                     <Input
                       type="text"
                       value={trackRef}
-                      onChange={(e) => setTrackRef(e.target.value)}
-                      placeholder="Have a tracking ID? (e.g. EIE-NG-847291)"
-                      className="w-full pl-10 pr-24 py-3 rounded-xl border border-border bg-card/80 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-foreground placeholder:text-muted-foreground shadow-xs h-11"
+                      onChange={(e) => setTrackRef(e.target.value.toUpperCase())}
+                      placeholder={
+                        lastReportId
+                          ? `Track your report (${lastReportId})`
+                          : "Enter tracking ID (e.g. EIE-NG-XXXXXX)"
+                      }
+                      className="w-full pl-10 pr-24 py-3 rounded-xl border border-border bg-card/80 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-foreground placeholder:text-muted-foreground shadow-xs h-11 uppercase font-mono"
                     />
                     <button
                       type="submit"
@@ -343,6 +356,19 @@ function Home() {
                       Track
                     </button>
                   </form>
+                  {lastReportId && (
+                    <div className="mt-2 flex items-center justify-center lg:justify-start gap-1.5 text-xs">
+                      <span className="text-muted-foreground text-[11px]">Your active report:</span>
+                      <button
+                        type="button"
+                        onClick={() => navigate({ to: "/track", search: { ref: lastReportId } })}
+                        className="font-mono text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer inline-flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="size-3 text-emerald-500" />
+                        {lastReportId} &rarr;
+                      </button>
+                    </div>
+                  )}
                   <div className="mt-2.5 flex items-center justify-center lg:justify-start gap-4 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Lock className="w-3 h-3 text-emerald-500 shrink-0" />
@@ -755,7 +781,16 @@ function Home() {
                           <Copy className="size-3.5 mr-1" /> Copy
                         </Button>
                       </div>
-                      <div className="mt-5 flex justify-center gap-2">
+                      <div className="mt-5 flex flex-wrap justify-center gap-2">
+                        <Button
+                          asChild
+                          size="sm"
+                          className="rounded-xl text-xs h-9 font-bold bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-xs px-4"
+                        >
+                          <Link to="/track" search={{ ref: quickSuccessRef } as any}>
+                            Track This Report Now &rarr;
+                          </Link>
+                        </Button>
                         <Button
                           type="button"
                           variant="ghost"

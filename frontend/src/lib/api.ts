@@ -272,11 +272,73 @@ function getStoredReports(): ReportItem[] {
   return [];
 }
 
+export interface UserReportBookmark {
+  reference_id: string;
+  product_name: string;
+  created_at: string;
+}
+
+export function saveLastSubmittedReport(refId: string, productName?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const clean = refId.trim().toUpperCase();
+    localStorage.setItem("fake9ja_last_submitted_report_id", clean);
+
+    const raw = localStorage.getItem("fake9ja_user_report_history");
+    const list: UserReportBookmark[] = raw ? JSON.parse(raw) : [];
+    const filtered = list.filter((item) => item.reference_id !== clean);
+    filtered.unshift({
+      reference_id: clean,
+      product_name: productName || "Reported Product",
+      created_at: "Just now",
+    });
+    localStorage.setItem("fake9ja_user_report_history", JSON.stringify(filtered.slice(0, 20)));
+  } catch {
+    // ignore
+  }
+}
+
+export function getLastSubmittedReportId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const direct = localStorage.getItem("fake9ja_last_submitted_report_id");
+    if (direct) return direct.trim().toUpperCase();
+    const history = getUserSubmittedReports();
+    if (history.length > 0 && history[0].reference_id) {
+      return history[0].reference_id.trim().toUpperCase();
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+export function getUserSubmittedReports(): UserReportBookmark[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem("fake9ja_user_report_history");
+    if (raw) {
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+    // Fallback to custom reports if history empty
+    const custom = getStoredReports();
+    return custom.map((c) => ({
+      reference_id: c.reference_id,
+      product_name: c.product_name,
+      created_at: c.created_at || "Recent",
+    }));
+  } catch {
+    return [];
+  }
+}
+
 function saveCustomReport(report: ReportItem) {
   try {
     const existing = getStoredReports();
     const updated = [report, ...existing.filter((r) => r.reference_id !== report.reference_id)];
     localStorage.setItem("fake9ja_custom_reports", JSON.stringify(updated.slice(0, 100)));
+    saveLastSubmittedReport(report.reference_id, report.product_name);
   } catch {
     // ignore
   }

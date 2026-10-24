@@ -28,7 +28,7 @@ import { ThemeToggle } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VideoRecorder } from "@/components/video-recorder";
-import { Fake9jaAPI } from "@/lib/api";
+import { Fake9jaAPI, saveLastSubmittedReport } from "@/lib/api";
 
 export const Route = createFileRoute("/report")({
   head: () => ({
@@ -125,12 +125,14 @@ function ReportPage() {
       const res = await Fake9jaAPI.submitReport(fd);
       setIsSubmitting(false);
       setSubmittedRef(res.reference_id);
+      saveLastSubmittedReport(res.reference_id, form.name);
       setDone(true);
       toast.success("Report securely logged in Fake9ja database!");
     } catch {
       setIsSubmitting(false);
       const fallbackRef = `EIE-NG-${Math.floor(100000 + Math.random() * 899999)}`;
       setSubmittedRef(fallbackRef);
+      saveLastSubmittedReport(fallbackRef, form.name);
       setDone(true);
     }
   };
@@ -687,7 +689,7 @@ function SuccessScreen({ referenceId }: { referenceId: string }) {
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild size="default" className="rounded-xl font-bold text-xs h-10 px-5 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-sm">
-            <Link to="/track" search={{ ref: submittedRef } as any}>
+            <Link to="/track" search={{ ref: referenceId } as any}>
               Track this Report Now
             </Link>
           </Button>

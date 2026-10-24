@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   Sparkles,
   Tag,
+  UserCheck,
   X,
   Zap,
 } from "lucide-react";
@@ -43,8 +44,11 @@ import {
   Fake9jaAPI,
   formatMediaUrl,
   getCategoryFallbackImage,
+  getLastSubmittedReportId,
+  getUserSubmittedReports,
   type ReportItem,
   type AiTelemetry,
+  type UserReportBookmark,
 } from "@/lib/api";
 
 export const Route = createFileRoute("/track")({
@@ -57,13 +61,13 @@ export const Route = createFileRoute("/track")({
       {
         name: "description",
         content:
-          "Track your counterfeit report status and inspect live AI model training telemetry: data ingestion, forensic sanitization filter, feature vectorization, and active weights.",
+          "Track your active counterfeit report status and inspect real-time AI model training telemetry: data ingestion, forensic sanitization filter, feature vectorization, and active weights.",
       },
-      { property: "og:title", content: "Fake9ja — Case Tracker & AI Model Training Pipeline" },
+      { property: "og:title", content: "Fake9ja — Active Case Tracker & AI Model Pipeline" },
       {
         property: "og:description",
         content:
-          "Check whether your reported product data has been uploaded, sanitized, and trained into the Fake9ja neural detection model.",
+          "Track your active case and see whether your reported product data has been sanitized, vectorized, and trained into the Fake9ja neural detection model.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -74,17 +78,22 @@ export const Route = createFileRoute("/track")({
 
 function Track() {
   const search = Route.useSearch();
-  const [id, setId] = useState(search.ref || "EIE-NG-248193");
+  const [id, setId] = useState(search.ref || "");
   const [report, setReport] = useState<ReportItem | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
   const [activeTab, setActiveTab] = useState<"ai_telemetry" | "investigation" | "evidence">("ai_telemetry");
+  const [userReports, setUserReports] = useState<UserReportBookmark[]>([]);
 
   const handleLookup = async (lookupId?: string) => {
-    const target = (lookupId || id).trim().toUpperCase();
-    if (!target) return;
+    const target = (lookupId !== undefined ? lookupId : id).trim().toUpperCase();
+    if (!target) {
+      toast.error("Please enter a Reference Code to track (e.g. EIE-NG-XXXXXX)");
+      return;
+    }
+    setId(target);
     setLoading(true);
     setErrorMsg("");
 
@@ -101,18 +110,31 @@ function Track() {
       if (res) {
         setReport(res);
       } else {
-        setErrorMsg(`No report registered under Reference ID "${target}". Please check the sample cases below or submit a new report.`);
+        setErrorMsg(`No report registered under Reference ID "${target}". Please check the code or track one of your active submissions.`);
       }
-    } catch (e) {
+    } catch {
       setLoading(false);
-      setErrorMsg(`Unable to load report for "${target}". Please check your internet connection and try again.`);
+      setErrorMsg(`Unable to load report for "${target}". Please check your network connection and try again.`);
     }
   };
 
   useEffect(() => {
-    const target = search.ref || id || "EIE-NG-248193";
-    setId(target);
-    handleLookup(target);
+    // Load customer's active submitted reports from storage
+    const list = getUserSubmittedReports();
+    setUserReports(list);
+
+    // Determine initial tracking ID:
+    // 1. URL search param (?ref=...)
+    // 2. Customer's last submitted active report from storage
+    // 3. Otherwise leave empty so customer can enter their own code or pick their active report
+    const initialTarget = (search.ref || getLastSubmittedReportId() || "").trim().toUpperCase();
+    if (initialTarget) {
+      setId(initialTarget);
+      handleLookup(initialTarget);
+    } else {
+      setLoading(false);
+      setReport(null);
+    }
   }, [search.ref]);
 
   const copyRef = (refText: string) => {
@@ -130,6 +152,11 @@ function Track() {
     );
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
+
+  const isCustomerReport = useMemo(() => {
+    if (!report) return false;
+    return userReports.some((u) => u.reference_id.toUpperCase() === report.reference_id.toUpperCase());
+  }, [report, userReports]);
 
   // Regulatory investigation steps
   const getStepIndex = (status: string) => {
@@ -241,17 +268,18 @@ function Track() {
       <section className="relative overflow-hidden px-4 pb-12 pt-10 sm:px-6 md:px-8 bg-gradient-to-b from-secondary/40 via-secondary/10 to-background border-b border-border">
         <div className="mx-auto max-w-3xl text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-            <Cpu className="size-3.5" /> Dual-Lens Case & AI Model Tracker
+            <Cpu className="size-3.5" /> Citizen Case & AI Telemetry Tracker
           </div>
 
           <h1 className="mt-3 font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-            Follow Your Case & AI Training
+            Track Your Active Report Status
           </h1>
 
           <p className="mx-auto mt-3 max-w-xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
-            See exactly where your counterfeit evidence stands with human laboratory investigators, and inspect how your data is filtered, vectorized, and trained into our AI detection model.
+            Follow your reported counterfeit case from initial receipt to laboratory verification, and inspect how your data is filtered, vectorized, and trained into our AI detection model.
           </p>
 
+          {/* Search Form (No hardcoded placeholder code) */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -266,7 +294,7 @@ function Track() {
                 value={id}
                 onChange={(e) => setId(e.target.value.toUpperCase())}
                 className="h-11 border-0 pl-10 font-mono text-sm shadow-none uppercase"
-                placeholder="e.g. EIE-NG-248193"
+                placeholder="Enter code (e.g. EIE-NG-XXXXXX)"
               />
             </div>
             <Button
@@ -278,32 +306,42 @@ function Track() {
             </Button>
           </form>
 
-          {/* Quick Demo Pre-fill Pills */}
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-muted-foreground">
-            <span>Explore sample reports:</span>
-            {[
-              { code: "EIE-NG-248193", label: "Medicines (Trained)" },
-              { code: "EIE-NG-248192", label: "Drinks (Escalated)" },
-              { code: "EIE-NG-248191", label: "Cosmetics (Filtered)" },
-              { code: "EIE-NG-248188", label: "Food Spices" },
-            ].map((item) => (
-              <button
-                key={item.code}
-                type="button"
-                onClick={() => {
-                  setId(item.code);
-                  handleLookup(item.code);
-                }}
-                className={`rounded-lg px-2 py-0.5 font-mono text-[11px] font-bold transition-all cursor-pointer ${
-                  id === item.code
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40"
-                    : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {item.code} <span className="text-[10px] opacity-75">({item.label})</span>
-              </button>
-            ))}
-          </div>
+          {/* Customer's Active Submissions Quick Selector */}
+          {userReports.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3.5 max-w-lg mx-auto text-left shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  <UserCheck className="size-3.5" /> Your Active Report Submissions ({userReports.length})
+                </div>
+                <span className="text-[10px] text-muted-foreground">Stored on this device</span>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {userReports.map((item) => {
+                  const isSelected = report?.reference_id.toUpperCase() === item.reference_id.toUpperCase();
+                  return (
+                    <button
+                      key={item.reference_id}
+                      type="button"
+                      onClick={() => {
+                        setId(item.reference_id);
+                        handleLookup(item.reference_id);
+                      }}
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs transition-all cursor-pointer border ${
+                        isSelected
+                          ? "border-emerald-500 bg-emerald-600 text-white shadow-xs font-bold"
+                          : "border-border bg-card hover:border-emerald-500/40 text-foreground"
+                      }`}
+                    >
+                      <span className="font-mono text-[11px]">{item.reference_id}</span>
+                      <span className="text-[11px] opacity-80 max-w-[120px] truncate">{item.product_name}</span>
+                      {isSelected && <Check className="size-3 stroke-[3]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -313,28 +351,84 @@ function Track() {
           <div className="mx-auto max-w-3xl py-24 text-center">
             <Loader2 className="mx-auto size-8 animate-spin text-emerald-500 mb-3" />
             <h3 className="font-display text-base font-bold text-foreground">Querying Forensic Telemetry...</h3>
-            <p className="mt-1 text-xs text-muted-foreground">Cross-referencing database registry and model weights...</p>
+            <p className="mt-1 text-xs text-muted-foreground">Retrieving report details, filter audits, and AI weights...</p>
           </div>
         ) : errorMsg ? (
           <div className="mx-auto max-w-xl rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
             <AlertTriangle className="mx-auto size-10 text-destructive mb-3" />
             <h3 className="font-display text-base font-bold text-foreground">Record Not Found</h3>
             <p className="mt-1 text-xs text-muted-foreground">{errorMsg}</p>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {userReports.length > 0 && (
+                <Button
+                  size="sm"
+                  className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                  onClick={() => {
+                    setId(userReports[0].reference_id);
+                    handleLookup(userReports[0].reference_id);
+                  }}
+                >
+                  <UserCheck className="mr-1.5 size-3.5" /> Track Your Latest Report ({userReports[0].reference_id})
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
+                asChild
                 className="rounded-xl text-xs"
-                onClick={() => {
-                  setId("EIE-NG-248193");
-                  handleLookup("EIE-NG-248193");
-                }}
               >
-                <RefreshCw className="mr-1.5 size-3.5" /> Load Sample Case EIE-NG-248193
+                <a href="/report">Submit a New Report</a>
               </Button>
             </div>
           </div>
-        ) : report ? (
+        ) : !report ? (
+          /* Empty Search State: When customer has not loaded or searched any case yet */
+          <div className="mx-auto max-w-2xl rounded-3xl border border-border bg-card p-8 sm:p-10 text-center shadow-sm">
+            <div className="grid size-14 place-items-center rounded-2xl bg-secondary mx-auto mb-4 text-muted-foreground">
+              <FileSearch className="size-7 text-emerald-500" />
+            </div>
+            <h2 className="font-display text-2xl font-extrabold text-foreground">
+              Ready to Track Your Report
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+              When you submit a report on Fake9ja, an official reference code is generated (e.g. EIE-NG-XXXXXX). Enter your code above to track its investigation and AI training status.
+            </p>
+
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button asChild className="rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white h-10 px-5 cursor-pointer">
+                <a href="/report">
+                  Submit a Counterfeit Report <ArrowRight className="size-3.5 ml-1.5" />
+                </a>
+              </Button>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-border">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                Or inspect a verified community case verification:
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {[
+                  { code: "EIE-NG-248193", name: "Amatem Forte", cat: "Medicines" },
+                  { code: "EIE-NG-248192", name: "FloraPure Lotion", cat: "Cosmetics" },
+                  { code: "EIE-NG-248190", name: "Semovita 10kg", cat: "Food" },
+                ].map((sample) => (
+                  <button
+                    key={sample.code}
+                    type="button"
+                    onClick={() => {
+                      setId(sample.code);
+                      handleLookup(sample.code);
+                    }}
+                    className="rounded-xl border border-border bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-emerald-500/40 transition-colors font-medium cursor-pointer"
+                  >
+                    <strong className="text-foreground">{sample.name}</strong> • <span className="font-mono">{sample.code}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Report Loaded & Visualized */
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -365,8 +459,15 @@ function Track() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {report.is_priority && (
+                  {/* Active Customer Submission Badge */}
+                  {isCustomerReport && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30">
+                      <CheckCircle2 className="size-3.5 text-emerald-500" /> Your Active Report
+                    </span>
+                  )}
+
+                  {report.is_priority && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30">
                       <Zap className="size-3" /> Priority Fast-Track
                     </span>
                   )}
@@ -427,7 +528,7 @@ function Track() {
 
                 <div className="flex flex-col justify-center border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-5 gap-2">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Direct Whistleblower Share
+                    Whistleblower Verification Share
                   </div>
                   <Button
                     size="sm"
@@ -503,7 +604,7 @@ function Track() {
                           {aiTelemetry?.contribution_impact || "+0.024% Regional Detection Sensitivity Boost"}
                         </h4>
                         <p className="mt-1 text-xs text-muted-foreground leading-relaxed max-w-xl">
-                          Your report passed through our sanitization and privacy filter. Its packaging defect features are actively training the{" "}
+                          This report passed through our sanitization and privacy filter. Its packaging defect features are actively training the{" "}
                           <strong className="text-foreground">{aiTelemetry?.target_model_version || "Fake9ja Mobile Neural v3.8"}</strong> inference weights in the{" "}
                           <span className="font-mono text-emerald-500 font-bold">{aiTelemetry?.training_partition || "TRAIN_SET_MEDICINES"}</span> partition.
                         </p>
@@ -610,7 +711,7 @@ function Track() {
                         <div>
                           <strong className="text-foreground block font-semibold">Privacy & PII Anonymization</strong>
                           <span className="text-muted-foreground text-[11px]">
-                            Biometric faces, phone numbers, and shopkeeper IDs automatically redacted from media artifacts.
+                            Biometric faces, phone numbers, and bystander IDs automatically redacted from media artifacts.
                           </span>
                         </div>
                       </div>
@@ -630,7 +731,7 @@ function Track() {
                         <div>
                           <strong className="text-foreground block font-semibold">Geospatial Validation</strong>
                           <span className="text-muted-foreground text-[11px]">
-                            Report coordinates confirmed against verified physical commercial hub ({report.market_address}).
+                            Report coordinates confirmed against verified physical commercial trade hub ({report.market_address}).
                           </span>
                         </div>
                       </div>
@@ -845,7 +946,7 @@ function Track() {
               </div>
             </div>
           </motion.div>
-        ) : null}
+        )}
       </section>
 
       {/* Lightbox for Evidence Inspection */}
