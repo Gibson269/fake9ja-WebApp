@@ -24,6 +24,19 @@ class ReportController extends Controller
      */
     public function store(Request $request)
     {
+        $input = $request->all();
+        if (isset($input['is_anonymous'])) {
+            $input['is_anonymous'] = filter_var($input['is_anonymous'], FILTER_VALIDATE_BOOLEAN);
+        } else {
+            $input['is_anonymous'] = true;
+        }
+        if (isset($input['is_priority'])) {
+            $input['is_priority'] = filter_var($input['is_priority'], FILTER_VALIDATE_BOOLEAN);
+        } else {
+            $input['is_priority'] = false;
+        }
+        $request->merge($input);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'brand' => 'nullable|string|max:255',
@@ -34,8 +47,8 @@ class ReportController extends Controller
             'details' => 'nullable|string',
             'price' => 'nullable|string|max:64',
             'contact' => 'nullable|string|max:255',
-            'is_anonymous' => 'nullable|boolean',
-            'is_priority' => 'nullable|boolean',
+            'is_anonymous' => 'nullable',
+            'is_priority' => 'nullable',
             'evidence.*' => 'nullable|file|mimes:jpeg,png,jpg,webp,mp4,mov|max:20480',
         ]);
 

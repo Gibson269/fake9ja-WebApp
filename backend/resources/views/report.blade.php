@@ -197,13 +197,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @php
                         $defects = [
-                            'Spelling or Printing Errors on Box',
-                            'No NAFDAC / SONCAP Number',
-                            'Strange Smell, Texture, or Color',
-                            'Tampered or Missing Security Foil/Seal',
-                            'Suspiciously Cheap / Extreme Discount',
-                            'Physical Health Reaction or Illness Caused',
-                            'Inoperative / Defective Out of Box',
+                            'Broken seal or tampered hologram',
+                            'Altered or missing expiry date',
+                            'Chemical smell or strange taste',
+                            'Fake or invalid NAFDAC / SON code',
+                            'Spelling errors on packaging',
+                            'Device overheated / battery swollen',
+                            'QR code / scratch PIN unverifiable',
+                            'Severe skin reaction / health issue',
+                            'Physical appearance differs from normal make, which makes it suspicious',
                             'Other Blatant Counterfeit Defect'
                         ];
                         @endphp

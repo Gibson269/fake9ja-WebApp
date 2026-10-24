@@ -16,7 +16,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
             <span className="font-display text-base font-extrabold tracking-tight text-foreground">
               FAKE<span className="text-emerald-500">9JA</span>
             </span>
-            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
+            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
               RADAR
             </span>
           </div>

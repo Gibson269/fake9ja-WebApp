@@ -1,0 +1,9 @@
+{
+  "name": "fake9ja-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "php artisan serve --host=127.0.0.1 --port=8000",
+    "serve": "php artisan serve --host=127.0.0.1 --port=8000"
+  }
+}

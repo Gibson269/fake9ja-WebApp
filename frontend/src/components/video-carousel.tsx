@@ -92,9 +92,16 @@ export function VideoCarousel() {
           };
         });
 
-        // Merge without losing initial defaults
-        const existingIds = new Set(normalized.map((n) => String(n.id)));
-        const merged = [...normalized, ...initial.filter((init) => !existingIds.has(String(init.id)))];
+        // Merge without losing initial defaults, filtering out legacy demo placeholders
+        const legacyIds = new Set([
+          "ig-tunde-ednut-commute-alert",
+          "yt-nafdac-open-market-raid",
+          "local-citizen-voice-abuja",
+          "local-citizen-onitsha-oil",
+        ]);
+        const validServerItems = normalized.filter((n) => !legacyIds.has(String(n.id)));
+        const existingIds = new Set(validServerItems.map((n) => String(n.id)));
+        const merged = [...validServerItems, ...initial.filter((init) => !existingIds.has(String(init.id)))];
         setItems(merged);
         saveStoredTestimonies(merged);
       })
@@ -204,7 +211,18 @@ export function VideoCarousel() {
       {/* Responsive Card Grid (1 col on mobile, 2 on tablet, 3 on desktop) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         <AnimatePresence mode="popLayout">
-          {visibleVideos.map((item, idx) => {
+          {visibleVideos.length === 0 ? (
+            <div className="col-span-full py-12 text-center bg-card/60 rounded-3xl border border-dashed border-border/80">
+              <p className="text-muted-foreground text-sm font-medium">No videos found under &ldquo;{activeFilter}&rdquo; in this exposé series.</p>
+              <button
+                onClick={() => setFilter("All")}
+                className="mt-3 px-4 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition cursor-pointer"
+              >
+                View All 8 Alarm Videos
+              </button>
+            </div>
+          ) : (
+            visibleVideos.map((item, idx) => {
             const thumbUrl = getVideoThumbnail(item);
             const isOrganic = item.localVideoUrl || item.platform === "Organic";
 
@@ -320,7 +338,7 @@ export function VideoCarousel() {
                 </div>
               </motion.div>
             );
-          })}
+          }))}
         </AnimatePresence>
       </div>
 

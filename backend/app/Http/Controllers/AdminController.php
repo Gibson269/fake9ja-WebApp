@@ -89,14 +89,15 @@ class AdminController extends Controller
         ];
 
         $defects = [
-            'Spelling or Printing Errors on Box',
-            'No NAFDAC / SONCAP Number',
-            'Strange Smell, Texture, or Color',
-            'Tampered or Missing Security Foil/Seal',
-            'Suspiciously Cheap / Extreme Discount',
-            'Physical Health Reaction or Illness Caused',
-            'Inoperative / Defective Out of Box',
-            'Adulterated or Toxic Chemical Content',
+            'Broken seal or tampered hologram',
+            'Altered or missing expiry date',
+            'Chemical smell or strange taste',
+            'Fake or invalid NAFDAC / SON code',
+            'Spelling errors on packaging',
+            'Device overheated / battery swollen',
+            'QR code / scratch PIN unverifiable',
+            'Severe skin reaction / health issue',
+            'Physical appearance differs from normal make, which makes it suspicious',
             'Other Blatant Counterfeit Defect'
         ];
 

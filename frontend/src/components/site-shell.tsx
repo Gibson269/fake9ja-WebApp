@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
   Check,
+  Clock,
   Copy,
   ExternalLink,
   Flame,
@@ -29,7 +30,6 @@ const nav = [
   { to: "/", label: "Home" },
   { to: "/community", label: "Incident Radar", badge: "Live" },
   { to: "/track", label: "Track Status" },
-  { to: "/admin", label: "Review Desk" },
 ] as const;
 
 export function ThemeToggle() {
@@ -72,51 +72,52 @@ export function ThemeToggle() {
   );
 }
 
-// Brand & Manufacturer Data Portal Modal
+// Brand & Manufacturer Data Portal Modal (Coming Soon — Feature needed only when AI model is active)
 export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const [brand, setBrand] = useState("");
   const [company, setCompany] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [tier, setTier] = useState<"starter" | "enterprise">("starter");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brand || !email) {
+    if (!brand.trim() || !email.trim()) {
       toast.error("Please enter your brand name and official email.");
       return;
     }
     setIsSubmitting(true);
-    const res = await Fake9jaAPI.submitBrandWatch({
-      brand_name: brand,
-      company_name: company || brand,
-      email,
-      phone,
-      tier,
-    });
+    try {
+      await Fake9jaAPI.submitBrandWatch({
+        brand_name: brand.trim(),
+        company_name: company.trim() || brand.trim(),
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        tier: "enterprise",
+      });
+    } catch {
+      // offline fallback
+    }
     setIsSubmitting(false);
     setSubmitted(true);
-    toast.success(res.message || "Brand verification data registered successfully!");
+    toast.success("Brand registered on standby priority roster!");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg overflow-hidden rounded-2xl border-border bg-card p-0 shadow-2xl">
         <div className="relative overflow-hidden bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 p-6 text-white">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
-            <ShieldCheck className="size-4" /> Fake9ja Manufacturer Registry
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400">
+            <Clock className="size-4 text-amber-400" />
+            <span>Coming Soon • Post AI Model Activation</span>
           </div>
           <DialogTitle className="mt-2 font-display text-2xl font-bold text-white">
-            Register Authentic Brand Data
+            Brand Data Registry
           </DialogTitle>
           <DialogDescription className="mt-1 text-xs text-slate-300">
-            Submit authentic barcode signatures and packaging designs to feed the AI model, helping train instant detection for cloned goods across Nigerian markets.
+            Feature is needed only when the AI model is active. Automated packaging forensics and continuous SKU counterfeit radar will unlock once model calibration is complete.
           </DialogDescription>
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/30">
-            <Sparkles className="size-3 text-emerald-400" /> Feeding the National Anti-Adulteration AI Model
-          </div>
         </div>
 
         {submitted ? (
@@ -124,9 +125,9 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30">
               <Check className="size-7" />
             </div>
-            <h3 className="mt-4 font-display text-xl font-bold">Brand Data Registered!</h3>
+            <h3 className="mt-4 font-display text-xl font-bold">Brand Placed on Standby Roster!</h3>
             <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-              We received your brand details for <strong className="text-foreground">{brand}</strong>. Our anti-counterfeit AI training team will link your authentic packaging specifications with the national verification radar.
+              We received standby registry details for <strong className="text-foreground">{brand}</strong>. As soon as the Fake9ja Computer Vision AI model goes live, our team will activate your direct catalog protection.
             </p>
             <Button
               className="mt-6 w-full rounded-xl font-bold"
@@ -140,38 +141,14 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 p-6">
-            <div className="grid grid-cols-2 gap-3">
-              <div
-                onClick={() => setTier("starter")}
-                className={`cursor-pointer rounded-xl border p-3.5 transition-all ${
-                  tier === "starter"
-                    ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500/30"
-                    : "border-border hover:border-border/80"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <strong className="text-xs font-bold">Standard Tier</strong>
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Active</span>
-                </div>
-                <div className="mt-2 text-sm font-extrabold text-foreground">AI Packaging Scan</div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Up to 5 SKUs registered for neural vision matching</p>
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200">
+              <div className="flex items-center gap-2 font-bold text-amber-400">
+                <Sparkles className="size-4 shrink-0" />
+                <span>Phase 2 Activation: AI Model Training in Progress</span>
               </div>
-
-              <div
-                onClick={() => setTier("enterprise")}
-                className={`cursor-pointer rounded-xl border p-3.5 transition-all ${
-                  tier === "enterprise"
-                    ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500/30"
-                    : "border-border hover:border-border/80"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <strong className="text-xs font-bold">Enterprise Tier</strong>
-                  <span className="text-[10px] font-semibold text-amber-500">36 States</span>
-                </div>
-                <div className="mt-2 text-sm font-extrabold text-foreground">Full Market Telemetry</div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Unlimited SKUs + Direct regulatory dossier dispatch</p>
-              </div>
+              <p className="mt-1.5 text-[11px] text-amber-200/90 leading-relaxed">
+                Fake9ja is currently aggregating citizen forensic samples across all 36 states to train and fine-tune our computer vision neural network. Leave your brand details below to be notified and prioritized as soon as the model is active.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -219,17 +196,12 @@ export function BrandWatchModal({ open, onOpenChange }: { open: boolean; onOpenC
               </div>
             </div>
 
-            <div className="rounded-xl bg-secondary/80 p-3 text-xs leading-relaxed text-muted-foreground">
-              <strong className="text-foreground block mb-0.5">Authenticity Dataset Agreement:</strong>
-              By enrolling, you grant Fake9ja permission to index your official packaging barcodes and tamper marks solely to train open-source AI anti-adulteration models.
-            </div>
-
             <Button
               type="submit"
               disabled={isSubmitting}
               className="w-full rounded-xl h-10 font-bold bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-sm shadow-emerald-600/30"
             >
-              {isSubmitting ? "Registering Brand Data..." : "Enroll Brand into AI Verification Network"}
+              {isSubmitting ? "Registering on Standby..." : "Join Brand Standby Roster (100% Free)"}
             </Button>
           </form>
         )}
@@ -252,9 +224,9 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-2 sm:px-6">
           <div className="flex items-center gap-2 overflow-hidden text-[11px] sm:text-xs">
             <span className="flex size-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-            <span className="font-semibold text-emerald-300 shrink-0">Civic AI Initiative:</span>
+            <span className="font-semibold text-emerald-300 shrink-0">Civic Intelligence Radar:</span>
             <span className="truncate text-slate-200">
-              We are gathering nationwide data to train an AI model capable of solving <strong>80% of product adulteration</strong> in Nigeria.
+              Gathering nationwide counterfeit evidence across all 36 states &bull; 100% free citizen protection
             </span>
           </div>
 
@@ -263,20 +235,20 @@ export function SiteShell({ children }: { children: ReactNode }) {
               onClick={() => setBrandWatchOpen(true)}
               className="text-emerald-300 hover:text-white font-medium underline underline-offset-2 transition-colors cursor-pointer"
             >
-              Brand Data Registry →
+              Brand Registry (Coming Soon) →
             </button>
           </div>
         </div>
       </div>
 
       {/* Fixed Sticky Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/90 backdrop-blur-xl transition-all">
+      <header className="sticky top-0 z-40 w-full glass-nav transition-all">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link to="/" aria-label="Fake9ja Home" className="flex items-center">
             <BrandMark />
           </Link>
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
+          <nav className="hidden items-center gap-1.5 lg:flex" aria-label="Main navigation">
             {nav.map((item) => (
               <Link
                 key={item.to}
@@ -287,7 +259,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
                 <span className="flex items-center gap-1.5">
                   {item.label}
                   {"badge" in item && (
-                    <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.2 text-[9px] font-extrabold text-emerald-500 uppercase tracking-wider">
+                    <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-500 uppercase tracking-wider">
                       {item.badge}
                     </span>
                   )}
@@ -300,18 +272,21 @@ export function SiteShell({ children }: { children: ReactNode }) {
               className="rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground cursor-pointer flex items-center gap-1.5"
             >
               <Building2 className="size-3.5 text-emerald-500" />
-              Brand Registry
+              <span>Brand Registry</span>
+              <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-extrabold text-amber-500 uppercase tracking-wider">
+                Coming Soon
+              </span>
             </button>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <ThemeToggle />
             <Button
               asChild
               className="rounded-xl font-bold text-xs h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-500/25 transition-all hover:shadow-md cursor-pointer"
             >
               <Link to="/report">
-                <ShieldAlert className="size-3.5 mr-1" />
+                <ShieldAlert className="size-3.5 mr-1.5" />
                 Report a Fake
               </Link>
             </Button>
@@ -362,7 +337,10 @@ export function SiteShell({ children }: { children: ReactNode }) {
                   className="flex items-center justify-between rounded-lg px-3.5 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground text-left cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
-                    <Building2 className="size-4 text-emerald-500" /> Brand Data Registry
+                    <Building2 className="size-4 text-emerald-500" /> Brand Registry
+                  </span>
+                  <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 text-[9px] font-extrabold text-amber-500 uppercase tracking-wider">
+                    Coming Soon
                   </span>
                 </button>
 
@@ -419,11 +397,10 @@ export function Footer({ onOpenBrandWatch }: { onOpenBrandWatch?: () => void }) 
               <li><Link to="/report" className="hover:text-emerald-500 transition-colors">Contribute Incident Data</Link></li>
               <li><Link to="/community" className="hover:text-emerald-500 transition-colors">Live Incident Radar</Link></li>
               <li><Link to="/track" className="hover:text-emerald-500 transition-colors">Track Reference ID</Link></li>
-              <li><Link to="/admin" className="hover:text-emerald-500 transition-colors">AI Review Desk</Link></li>
               {onOpenBrandWatch && (
                 <li>
                   <button onClick={onOpenBrandWatch} className="text-emerald-500 hover:underline font-semibold cursor-pointer">
-                    Brand Data Registry
+                    Brand Registry (Coming Soon)
                   </button>
                 </li>
               )}

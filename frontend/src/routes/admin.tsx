@@ -45,7 +45,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Tag,
-  Ticket,
   Trash2,
   TrendingUp,
   UploadCloud,
@@ -86,7 +85,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type AdminTab = "overview" | "triage" | "publish" | "videos" | "hotspots" | "brands" | "coupons" | "export";
+type AdminTab = "overview" | "triage" | "publish" | "videos" | "hotspots" | "brands" | "export";
 
 function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -748,8 +747,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     { id: "publish", label: "Publish Fake Product", icon: ShieldAlert, highlight: true },
     { id: "videos", label: "Video Testimonies", icon: Video, count: videoTestimonies.length },
     { id: "hotspots", label: "Market Hotspots", icon: Flame, count: hotspots.length },
-    { id: "brands", label: "Brand Watch Sentinel", icon: ShieldCheck, count: brandWatches.length },
-    { id: "coupons", label: "Promo & Vouchers", icon: Ticket },
+    { id: "brands", label: "Brand Registry (Coming Soon)", icon: Building2, count: brandWatches.length },
     { id: "export", label: "Regulatory Dispatch", icon: Download },
   ];
 
@@ -906,8 +904,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {activeTab === "triage" && "Incident Case Review & Verification Queue"}
                 {activeTab === "publish" && "Publish Official Counterfeit Product Alert"}
                 {activeTab === "hotspots" && "Nigerian Commercial Market Hotspots Registry"}
-                {activeTab === "brands" && "Manufacturer & Brand Watch Sentinel Directory"}
-                {activeTab === "coupons" && "Priority Discount & Promo Vouchers"}
+                {activeTab === "brands" && "Manufacturer Brand Registry (Coming Soon — Active Post AI Model)"}
                 {activeTab === "export" && "Law Enforcement & Regulatory Export Station"}
               </h2>
               <p className="hidden sm:block text-xs text-slate-400">
@@ -981,7 +978,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   { label: "Total Submissions", val: totalReportsCount.toString(), sub: "100% Free Public Good", Icon: Inbox, colorClass: "text-emerald-400" },
                   { label: "Confirmed Fakes", val: verifiedFakeCount.toString(), sub: "Flagged on Radar", Icon: ShieldAlert, colorClass: "text-rose-400" },
                   { label: "Pending Triage", val: underReviewCount.toString(), sub: "Active Inspector Queue", Icon: Clock, colorClass: "text-amber-400" },
-                  { label: "SLA Fast-Track", val: priorityCount.toString(), sub: "WELCOME30 Priority", Icon: Zap, colorClass: "text-cyan-400" },
+                  { label: "High Priority Queue", val: priorityCount.toString(), sub: "Emergency Triage", Icon: Zap, colorClass: "text-cyan-400" },
                 ].map(({ label, val, sub, Icon, colorClass }) => (
                   <div
                     key={label}
@@ -2021,21 +2018,53 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           )}
 
-          {/* TAB 5: BRAND WATCH SENTINEL */}
+          {/* TAB 5: BRAND REGISTRY (COMING SOON) */}
           {activeTab === "brands" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-display text-lg font-bold text-white">
-                    Manufacturer Brand Watch Directory
+                  <h3 className="font-display text-lg font-bold text-white flex items-center gap-2">
+                    Manufacturer Brand Registry
+                    <span className="rounded-full bg-amber-500/20 border border-amber-500/30 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-400 uppercase tracking-wider">
+                      Coming Soon
+                    </span>
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Corporate subscribers whose product packaging is continuously analyzed by Fake9ja radar.
+                    Corporate manufacturer registration for automated packaging forensics and neural sentinel protection.
+                  </p>
+                </div>
+              </div>
+
+              {/* AI Model Dependency Notice */}
+              <div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-5 flex items-start gap-4">
+                <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 shrink-0">
+                  <Clock className="size-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 font-mono text-[10px] font-extrabold uppercase tracking-widest text-amber-400 border border-amber-400/30">
+                      COMING SOON
+                    </span>
+                    <span className="text-xs text-amber-300 font-bold">Feature Needed Only When AI Model is Active</span>
+                  </div>
+                  <h4 className="mt-1 font-display text-base font-bold text-white">
+                    Automated Brand SKU Sentinel is Pending AI Model Deployment
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-300 leading-relaxed">
+                    Automated brand registry and continuous SKU barcode scanning requires the active inference pipeline of the Fake9ja Computer Vision AI model. We are currently gathering real citizen forensic data across Nigeria's 36 states to train and calibrate the model weights. This feature will automatically unlock once the model is active.
                   </p>
                 </div>
               </div>
 
               <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80 shadow-2xl">
+                <div className="p-4 border-b border-slate-800 bg-slate-950/60 flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    Enrolled Brands (Pre-Registration Database)
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    {brandWatches.length} Brands on Standby
+                  </span>
+                </div>
                 <table className="w-full text-left text-xs min-w-[700px]">
                   <thead className="border-b border-slate-800 bg-slate-950/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     <tr>
@@ -2068,75 +2097,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </span>
                         </td>
                         <td className="py-4 px-6 text-right">
-                          <span className="text-emerald-400 font-bold text-xs flex items-center justify-end gap-1.5">
-                            <ShieldCheck className="size-4" /> Active
+                          <span className="text-amber-400 font-bold text-xs flex items-center justify-end gap-1.5">
+                            <Clock className="size-4" /> Pending AI Activation
                           </span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: COUPONS & PROMOS */}
-          {activeTab === "coupons" && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-display text-lg font-bold text-white">
-                  Promotion & Priority Voucher Management
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Manage active fee reductions for fast-track verification SLA and manufacturer onboarding.
-                </p>
-              </div>
-
-              <div className="grid gap-6 sm:grid-cols-2">
-                {/* WELCOME30 Card */}
-                <div className="rounded-3xl border border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 to-slate-900 p-6 shadow-xl">
-                  <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-emerald-500/20 px-3 py-1 font-mono text-xs font-bold text-emerald-400 border border-emerald-500/30">
-                      ACTIVE SYSTEM VOUCHER
-                    </span>
-                    <span className="font-display text-2xl font-black text-emerald-400">30% OFF</span>
-                  </div>
-
-                  <h4 className="mt-4 font-mono text-2xl font-black text-white tracking-wider">
-                    WELCOME30
-                  </h4>
-                  <p className="mt-2 text-xs text-slate-300 leading-relaxed">
-                    Official 30% discount applied to the ₦5,000 Priority Fast-Track SLA fee and Brand Watch Sentinel subscriptions.
-                  </p>
-
-                  <div className="mt-6 rounded-2xl bg-slate-950/80 p-3.5 border border-slate-800 text-xs space-y-1.5 font-mono">
-                    <div className="flex justify-between text-slate-400">
-                      <span>Base Fast-Track:</span>
-                      <span className="line-through text-slate-500">₦5,000</span>
-                    </div>
-                    <div className="flex justify-between text-emerald-400 font-bold">
-                      <span>Discounted Rate:</span>
-                      <span>₦3,500</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Voucher Policy Info */}
-                <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 flex flex-col justify-between">
-                  <div>
-                    <h4 className="font-display text-base font-bold text-white">
-                      Priority SLA Revenue & Support
-                    </h4>
-                    <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                      While standard reporting is <strong>100% free forever for all Nigerian citizens</strong>, priority fast-track fees help fund physical chemical reagent test kits and emergency field inspections.
-                    </p>
-                  </div>
-
-                  <div className="mt-6 rounded-2xl bg-slate-950 p-4 border border-slate-800 text-xs text-slate-300 flex items-center gap-3">
-                    <CheckCircle2 className="size-5 text-emerald-400 shrink-0" />
-                    <span>Coupon validation is active on `/report`, `/brand-protection`, and API endpoints.</span>
-                  </div>
-                </div>
               </div>
             </div>
           )}

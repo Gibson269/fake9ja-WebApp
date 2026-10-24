@@ -128,16 +128,14 @@ function Home() {
   const [hotspotsList, setHotspotsList] = useState<any[]>([]);
   const [statsLoaded, setStatsLoaded] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    // Fetch live statistics, ticker alerts, and hotspots in parallel
-    Promise.all([
-      Fake9jaAPI.getPublicStats().catch(() => null),
-      Fake9jaAPI.getReports().catch(() => []),
-      Fake9jaAPI.getHotspots().catch(() => []),
-    ]).then(([statsData, reportsData, hotspotsData]) => {
-      if (!isMounted) return;
+  // Live Data & Telemetry Fetcher
+  const fetchLiveData = async () => {
+    try {
+      const [statsData, reportsData, hotspotsData] = await Promise.all([
+        Fake9jaAPI.getPublicStats().catch(() => null),
+        Fake9jaAPI.getReports().catch(() => []),
+        Fake9jaAPI.getHotspots().catch(() => []),
+      ]);
 
       if (statsData) {
         const vectors =
@@ -148,14 +146,14 @@ function Home() {
         setLiveStats({
           total_reports: statsData.total_reports ?? 0,
           verified_fake: statsData.verified_fake ?? 0,
-          states_active: statsData.states_active ?? 36,
+          states_active: statsData.states_active ?? 4,
           hotspot_count: statsData.hotspot_count ?? 8,
           training_datasets: vectors,
           training_vectors: vectors,
           detection_speed: statsData.detection_speed || "< 1.2s",
           target_accuracy: statsData.target_accuracy || "80%",
           high_risk_count: statsData.high_risk_count ?? 0,
-          video_count: statsData.video_count ?? 0,
+          video_count: statsData.video_count ?? 8,
         });
       }
 
@@ -166,13 +164,15 @@ function Home() {
       if (Array.isArray(hotspotsData) && hotspotsData.length > 0) {
         setHotspotsList(hotspotsData.slice(0, 6));
       }
-
+    } catch {
+      // ignore
+    } finally {
       setStatsLoaded(true);
-    });
+    }
+  };
 
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    fetchLiveData();
   }, []);
 
   // Quick 3-data submission handler
@@ -201,6 +201,8 @@ function Home() {
       setIsSubmittingQuick(false);
       setQuickSuccessRef(res.reference_id);
       toast.success("Incident data securely logged in AI training dataset!");
+      // Automatically refresh live telemetry counts from backend
+      fetchLiveData();
     } catch {
       setIsSubmittingQuick(false);
       const fallback = `EIE-NG-${Math.floor(100000 + Math.random() * 899999)}`;
@@ -225,7 +227,7 @@ function Home() {
 
   // Safe vector count display
   const trainingVectorsFormatted = useMemo(() => {
-    const val = liveStats?.training_vectors ?? 1480;
+    const val = liveStats?.training_vectors ?? 1592;
     return val.toLocaleString();
   }, [liveStats?.training_vectors]);
 
@@ -233,57 +235,33 @@ function Home() {
     <SiteShell>
       <div className="w-full max-w-full overflow-x-hidden">
         {/* ========================================================================= */}
-        {/* 1. AI DATA GATHERING LIVE NOTICE RIBBON (Direct from /8000 route)          */}
-        {/* ========================================================================= */}
-        <div className="bg-emerald-950/80 border-b border-emerald-500/30 py-2.5 px-4 text-xs">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                DATA GATHERING PIPELINE
-              </span>
-              <span className="text-slate-300 text-xs text-center sm:text-left leading-tight">
-                <strong className="text-white">Active Intake:</strong> We are gathering real-world counterfeit evidence across Nigerian markets to train the AI model. Live data below stream from database.
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-[11px] text-emerald-300 shrink-0">
-              <span className="font-mono flex items-center gap-1">
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                {trainingVectorsFormatted} Vectors Ingested
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 2. LIVE TICKER RIBBON (Direct from /8000 route)                           */}
+        {/* 1. SEAMLESS LIVE RADAR MARQUEE TICKER                                     */}
         {/* ========================================================================= */}
         {tickerAlerts.length > 0 && (
-          <div className="bg-slate-950/90 border-b border-slate-800 py-2 px-4 overflow-hidden">
+          <div className="bg-slate-950/85 border-b border-border/50 py-2 px-4 overflow-hidden backdrop-blur-md">
             <div className="max-w-7xl mx-auto flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30 shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/15 text-red-400 border border-red-500/30 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                 LIVE RADAR
               </span>
               <div className="overflow-hidden whitespace-nowrap w-full relative">
                 <div className="animate-marquee flex items-center gap-8 text-xs text-slate-300">
-                  {/* Duplicated list for seamless infinite loop */}
                   {[...tickerAlerts, ...tickerAlerts].map((alert, i) => (
                     <span key={`${alert.reference_id}-${i}`} className="inline-flex items-center gap-2 shrink-0">
                       <span className="text-emerald-400 font-semibold">
-                        [{alert.state} - {alert.market_address}]:
+                        [{alert.state} • {alert.market_address}]:
                       </span>
                       <span className="text-slate-100 font-medium">{alert.product_name}</span>
                       <span
                         className={`px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${
                           alert.status === "verified_fake"
-                            ? "bg-red-900/60 text-red-200 border border-red-700"
-                            : "bg-amber-900/60 text-amber-200 border border-amber-700"
+                            ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                            : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
                         }`}
                       >
                         {alert.status.replace("_", " ")}
                       </span>
-                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-600">•</span>
                     </span>
                   ))}
                 </div>
@@ -293,40 +271,40 @@ function Home() {
         )}
 
         {/* ========================================================================= */}
-        {/* 3. HERO SECTION (Direct from /8000 route)                                 */}
+        {/* 2. HERO SECTION                                                           */}
         {/* ========================================================================= */}
-        <div className="relative overflow-hidden">
-          {/* Hero Background Visual Glows */}
+        <div className="relative overflow-hidden pt-8 pb-14 sm:pt-12 sm:pb-20 lg:pt-16 lg:pb-24">
+          {/* Subtle Ambient Background Mesh */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-emerald-500/10 via-teal-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
-          <div className="absolute -top-32 -right-32 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+          <div className="absolute top-1/4 right-5 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-16 lg:pb-20">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
               {/* Left Hero Content */}
-              <div className="lg:col-span-7 space-y-5 sm:space-y-6 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-300 shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>100% Free Public Consumer Defense Platform</span>
+              <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-600 dark:text-emerald-400 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>National Counterfeit Defense Network &bull; 100% Free Public Good</span>
                 </div>
 
-                <h1 className="font-heading font-black text-3xl sm:text-5xl lg:text-6xl text-slate-900 dark:text-white leading-[1.12] tracking-tight">
+                <h1 className="font-heading font-black text-3xl sm:text-5xl lg:text-6xl text-foreground leading-[1.14] tracking-tight">
                   Spot Fakes. <br className="hidden sm:inline" />
                   Protect Nigeria. <br className="hidden sm:inline" />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400">
                     Zero Tolerance for Counterfeits.
                   </span>
                 </h1>
 
-                <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                  Fake9ja empowers everyday Nigerians to document, report, and verify suspected counterfeit medicines, adulterated foods, and substandard goods. Completely free, completely community-driven.
+                <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                  Fake9ja empowers everyday Nigerians to document, report, and verify suspected counterfeit medicines, adulterated foods, and substandard goods. Citizen-driven, completely free, and powered by safety intelligence.
                 </p>
 
-                {/* Action CTA Buttons */}
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1 sm:pt-2">
+                {/* Primary CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1">
                   <Button
                     asChild
                     size="lg"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-8 sm:py-4 rounded-2xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/25 transition transform hover:-translate-y-0.5 cursor-pointer h-12"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-8 sm:py-4 rounded-xl font-bold text-sm sm:text-base text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/25 transition transform hover:-translate-y-0.5 cursor-pointer h-12"
                   >
                     <Link to="/report">
                       <PlusCircle className="w-5 h-5 mr-1" />
@@ -338,43 +316,49 @@ function Home() {
                     asChild
                     variant="outline"
                     size="lg"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:px-7 sm:py-4 rounded-2xl font-semibold text-sm sm:text-base text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-xs cursor-pointer h-12"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 sm:px-7 sm:py-4 rounded-xl font-semibold text-sm sm:text-base text-foreground bg-card/80 border-border hover:bg-secondary transition shadow-xs cursor-pointer h-12"
                   >
                     <Link to="/community">
-                      <Radio className="w-5 h-5 text-emerald-500 mr-1" />
+                      <Radio className="w-4 h-4 text-emerald-500 mr-1.5" />
                       <span>Explore Incident Radar</span>
                     </Link>
                   </Button>
                 </div>
 
-                {/* Instant Tracking Search Widget */}
-                <div className="pt-2 sm:pt-4 max-w-md mx-auto lg:mx-0">
+                {/* Streamlined Tracking Search Bar */}
+                <div className="pt-2 max-w-md mx-auto lg:mx-0">
                   <form onSubmit={handleTrackSubmit} className="relative flex items-center">
+                    <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 pointer-events-none" />
                     <Input
                       type="text"
                       value={trackRef}
                       onChange={(e) => setTrackRef(e.target.value)}
                       placeholder="Have a tracking ID? (e.g. EIE-NG-847291)"
-                      className="w-full pl-11 pr-24 py-3 sm:py-3.5 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-900 dark:text-white placeholder:text-slate-400 shadow-xs h-11 sm:h-12"
+                      className="w-full pl-10 pr-24 py-3 rounded-xl border border-border bg-card/80 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-foreground placeholder:text-muted-foreground shadow-xs h-11"
                     />
-                    <Search className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
                     <button
                       type="submit"
-                      className="absolute right-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition cursor-pointer"
+                      className="absolute right-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition cursor-pointer shadow-xs"
                     >
                       Track
                     </button>
                   </form>
-                  <p className="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5 justify-center lg:justify-start">
-                    <Lock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span>No login required &bull; Anonymous reporting supported &bull; Free forever</span>
-                  </p>
+                  <div className="mt-2.5 flex items-center justify-center lg:justify-start gap-4 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Lock className="w-3 h-3 text-emerald-500 shrink-0" />
+                      Anonymous
+                    </span>
+                    <span>&bull;</span>
+                    <span>Zero Login</span>
+                    <span>&bull;</span>
+                    <span>Free Forever</span>
+                  </div>
                 </div>
               </div>
 
               {/* Right Hero Card: Dynamic Radar Scanner Preview */}
               <div className="lg:col-span-5">
-                <div className="relative rounded-3xl p-3 shadow-2xl border border-slate-200/80 dark:border-slate-800 bg-card/90 backdrop-blur-xl group overflow-hidden">
+                <div className="relative rounded-3xl p-3 shadow-xl border border-border/80 bg-card/90 backdrop-blur-xl group overflow-hidden">
                   <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-slate-950">
                     <img
                       src="/images/hero-scanner.jpg"
@@ -383,12 +367,12 @@ function Home() {
                       loading="eager"
                       decoding="async"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent pointer-events-none" />
 
                     {/* Floating Telemetry Badge 1: Verification Status */}
                     <div className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 flex items-center gap-2 rounded-xl bg-slate-900/85 border border-emerald-500/40 px-3 py-1.5 text-xs text-white backdrop-blur shadow-lg">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span className="font-mono text-[11px] font-bold text-emerald-300">RADAR SCAN: LIVE</span>
+                      <span className="font-mono text-[11px] font-bold text-emerald-300">RADAR SCAN: ACTIVE</span>
                     </div>
 
                     {/* Floating Telemetry Badge 2: Live Hotspot Counter */}
@@ -397,7 +381,7 @@ function Home() {
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Database Live Feed</span>
                         <strong className="font-heading text-xs sm:text-sm font-extrabold text-white flex items-center gap-1.5">
                           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                          {(liveStats?.total_reports && liveStats.total_reports > 0 ? liveStats.total_reports : 1480).toLocaleString()}+ Citizens Reporting
+                          {(liveStats ? liveStats.total_reports : tickerAlerts.length).toLocaleString()} Reports Ingested
                         </strong>
                       </div>
                       <div className="text-right">
@@ -408,23 +392,23 @@ function Home() {
                   </div>
 
                   {/* Bottom Quick Mini Metrics */}
-                  <div className="p-2.5 sm:p-3.5 grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-2 border border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block truncate">Verified Fakes</span>
-                      <span className="font-heading font-extrabold text-red-500 dark:text-red-400 text-xs sm:text-sm">
-                        {(liveStats?.verified_fake && liveStats.verified_fake > 0 ? liveStats.verified_fake : 684).toLocaleString()}
+                  <div className="p-2.5 sm:p-3 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="rounded-xl bg-secondary/60 p-2 border border-border">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block truncate">Verified Fakes</span>
+                      <span className="font-heading font-extrabold text-red-500 text-xs sm:text-sm">
+                        {(liveStats ? liveStats.verified_fake : 0).toLocaleString()}
                       </span>
                     </div>
-                    <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-2 border border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block truncate">Active Hotspots</span>
-                      <span className="font-heading font-extrabold text-amber-500 dark:text-amber-400 text-xs sm:text-sm">
-                        {liveStats?.hotspot_count && liveStats.hotspot_count > 0 ? liveStats.hotspot_count : 32} Markets
+                    <div className="rounded-xl bg-secondary/60 p-2 border border-border">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block truncate">Active Hotspots</span>
+                      <span className="font-heading font-extrabold text-amber-500 text-xs sm:text-sm">
+                        {(liveStats ? liveStats.hotspot_count : (hotspotsList.length || 8))} Markets
                       </span>
                     </div>
-                    <div className="rounded-xl bg-slate-100 dark:bg-slate-900/60 p-2 border border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block truncate">States Covered</span>
+                    <div className="rounded-xl bg-secondary/60 p-2 border border-border">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block truncate">States Covered</span>
                       <span className="font-heading font-extrabold text-emerald-500 text-xs sm:text-sm">
-                        {liveStats?.states_active ?? 36}/36 States
+                        {(liveStats ? liveStats.states_active : 4)}/36 States
                       </span>
                     </div>
                   </div>
@@ -435,16 +419,56 @@ function Home() {
         </div>
 
         {/* ========================================================================= */}
+        {/* 3. PROOF METRICS STRIP                                                    */}
+        {/* ========================================================================= */}
+        <section className="border-y border-border/80 bg-secondary/30 py-6 px-4">
+          <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-center">
+            <div className="p-3">
+              <span className="block font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-foreground">
+                {(liveStats ? liveStats.total_reports : tickerAlerts.length).toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 block">
+                Total Incident Reports
+              </span>
+            </div>
+            <div className="p-3">
+              <span className="block font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-red-500">
+                {(liveStats ? liveStats.verified_fake : 0).toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 block">
+                Verified Counterfeits
+              </span>
+            </div>
+            <div className="p-3">
+              <span className="block font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-amber-500">
+                {(liveStats ? liveStats.hotspot_count : (hotspotsList.length || 8))}
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 block">
+                Tracked Trade Hotspots
+              </span>
+            </div>
+            <div className="p-3">
+              <span className="block font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-emerald-500">
+                {(liveStats ? liveStats.states_active : 4)} / 36
+              </span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 block">
+                States &amp; FCT Monitored
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
         {/* 4. CONSUMER VIGILANCE MANIFESTO SECTION (Exact quote + 3 pillars)         */}
         {/* ========================================================================= */}
-        <section className="py-12 sm:py-16 bg-gradient-to-b from-slate-100/80 via-slate-50 to-white dark:from-slate-900/60 dark:via-slate-950/40 dark:to-slate-950 border-y border-slate-200 dark:border-slate-800">
+        <section className="py-14 sm:py-20 border-b border-border bg-secondary/15">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
+            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                 <BadgeAlert className="w-3.5 h-3.5 text-amber-500" />
                 Essential Consumer Protection Advisory
               </span>
-              <h2 className="mt-3 font-heading font-black text-2xl sm:text-3xl md:text-4xl text-slate-900 dark:text-white tracking-tight">
+              <h2 className="mt-3 font-heading font-black text-2xl sm:text-3xl md:text-4xl text-foreground tracking-tight">
                 The Reality of the Nigerian Market
               </h2>
             </div>
@@ -452,57 +476,57 @@ function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               {/* The Quote & Warning Card */}
               <div className="lg:col-span-7">
-                <div className="relative rounded-3xl p-5 sm:p-8 shadow-xl border border-amber-500/30 bg-card/90 backdrop-blur-md">
-                  <div className="flex items-center gap-3 pb-5 border-b border-slate-200 dark:border-slate-800">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-6 h-6" />
+                <div className="relative rounded-3xl p-6 sm:p-8 shadow-sm border border-border bg-card">
+                  <div className="flex items-center gap-3 pb-5 border-b border-border">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
                         National Consumer Alert
                       </span>
-                      <h3 className="font-heading text-base sm:text-lg font-extrabold text-slate-900 dark:text-white">
-                        Guarding Your Health & Wallet
+                      <h3 className="font-heading text-base sm:text-lg font-bold text-foreground">
+                        Guarding Your Health &amp; Wallet
                       </h3>
                     </div>
                   </div>
 
                   {/* The User's Exact Quote */}
                   <div className="mt-6 relative">
-                    <span className="text-5xl font-serif text-amber-500/30 absolute -top-4 -left-2 select-none leading-none">“</span>
-                    <blockquote className="pl-6 text-base sm:text-lg font-medium text-slate-900 dark:text-slate-100 leading-relaxed italic">
+                    <span className="text-5xl font-serif text-amber-500/20 absolute -top-4 -left-2 select-none leading-none">“</span>
+                    <blockquote className="pl-6 text-base sm:text-lg font-medium text-foreground leading-relaxed italic">
                       As consumers, we must be more careful about what we buy, where we buy it from, and what we choose to overlook just because something is cheaper.
                     </blockquote>
                   </div>
 
                   {/* 3 Analytical Pillars */}
-                  <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-6 border-t border-slate-200 dark:border-slate-800">
-                    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/60 p-4 border border-slate-200 dark:border-slate-800">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                  <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-6 border-t border-border">
+                    <div className="rounded-2xl bg-secondary/40 p-4 border border-border/80">
+                      <div className="flex items-center gap-2 text-xs font-bold text-foreground">
                         <ShoppingBag className="w-4 h-4 text-emerald-500 shrink-0" />
                         <span>What We Buy</span>
                       </div>
-                      <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
                         Examine foil seals, laser batch codes, NAFDAC registration numbers, and ingredient spelling errors.
                       </p>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/60 p-4 border border-slate-200 dark:border-slate-800">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                    <div className="rounded-2xl bg-secondary/40 p-4 border border-border/80">
+                      <div className="flex items-center gap-2 text-xs font-bold text-foreground">
                         <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
                         <span>Where We Buy From</span>
                       </div>
-                      <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
                         Distinguish authorized pharmacies and registered stores from unverified open market street stalls.
                       </p>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 dark:bg-slate-900/60 p-4 border border-slate-200 dark:border-slate-800">
-                      <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
+                    <div className="rounded-2xl bg-secondary/40 p-4 border border-border/80">
+                      <div className="flex items-center gap-2 text-xs font-bold text-foreground">
                         <TrendingDown className="w-4 h-4 text-amber-500 shrink-0" />
                         <span>The "Cheaper" Trap</span>
                       </div>
-                      <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
                         A 50% discount on vital antibiotics or baby formula is not a bargain—it is a life-threatening hazard.
                       </p>
                     </div>
@@ -512,7 +536,7 @@ function Home() {
 
               {/* Visual Graphic */}
               <div className="lg:col-span-5">
-                <div className="p-3 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl bg-card group overflow-hidden">
+                <div className="p-3 rounded-3xl border border-border shadow-sm bg-card group overflow-hidden">
                   <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-slate-950">
                     <img
                       src="/images/consumer-vigilance.jpg"
@@ -672,33 +696,33 @@ function Home() {
         {/* ========================================================================= */}
         {/* 7. QUICK CITIZEN INTAKE MODULE (3 Core Data Needed)                       */}
         {/* ========================================================================= */}
-        <section className="py-14 sm:py-16 bg-white dark:bg-slate-950" id="quick-alert">
+        <section className="py-14 sm:py-20 border-b border-border bg-background" id="quick-alert">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-2.5 sm:space-y-3">
+            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-2.5">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                 <Zap className="w-3.5 h-3.5 text-emerald-500" />
                 60-Second Citizen Rapid Intake
               </span>
-              <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 dark:text-white tracking-tight">
+              <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-foreground tracking-tight">
                 Quick Alert: 3 Core Data Needed
               </h2>
-              <p className="text-xs sm:text-sm lg:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p className="text-xs sm:text-sm lg:text-base text-muted-foreground leading-relaxed">
                 When you spot a suspicious product in a store or market, collecting these 3 vital details immediately feeds our anti-counterfeit database:{" "}
-                <strong className="text-slate-900 dark:text-white">Product Type</strong>, <strong className="text-slate-900 dark:text-white">Purchased Location</strong>, and <strong className="text-slate-900 dark:text-white">Amount Paid for it</strong>.
+                <strong className="text-foreground">Product Type</strong>, <strong className="text-foreground">Purchased Location</strong>, and <strong className="text-foreground">Amount Paid for it</strong>.
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
               {/* The Form Submitting to Database */}
               <div className="lg:col-span-7">
-                <div className="rounded-3xl p-5 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl bg-card">
-                  <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-slate-200 dark:border-slate-800 mb-5 sm:mb-6">
+                <div className="rounded-3xl p-6 sm:p-8 border border-border shadow-sm bg-card">
+                  <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-border mb-5 sm:mb-6">
                     <div>
-                      <h3 className="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                      <h3 className="font-heading font-bold text-base sm:text-lg text-foreground flex items-center gap-2">
                         <Zap className="w-5 h-5 text-emerald-500" /> Quick Citizen Incident Flag
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Submits directly into the anti-counterfeit database. 100% free & anonymous.
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Submits directly into the anti-counterfeit database. 100% free &amp; anonymous.
                       </p>
                     </div>
                     <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -707,7 +731,7 @@ function Home() {
                   </div>
 
                   {quickSuccessRef ? (
-                    <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center">
+                    <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
                       <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-emerald-500 text-white shadow-md">
                         <CircleCheck className="size-6" />
                       </div>
@@ -718,7 +742,7 @@ function Home() {
                         Your tracking ID for this incident:
                       </p>
                       <div className="mt-3 flex items-center justify-center gap-2">
-                        <span className="font-mono text-sm font-bold bg-card border border-border px-3 py-1.5 rounded-xl text-emerald-600 dark:text-emerald-400">
+                        <span className="font-mono text-sm font-bold bg-card border border-border px-3.5 py-1.5 rounded-xl text-emerald-600 dark:text-emerald-400">
                           {quickSuccessRef}
                         </span>
                         <Button
@@ -731,7 +755,7 @@ function Home() {
                           <Copy className="size-3.5 mr-1" /> Copy
                         </Button>
                       </div>
-                      <div className="mt-4 flex justify-center gap-2">
+                      <div className="mt-5 flex justify-center gap-2">
                         <Button
                           type="button"
                           variant="ghost"
@@ -752,36 +776,36 @@ function Home() {
                     <form onSubmit={handleQuickSubmit} className="space-y-4 sm:space-y-5">
                       {/* Data Point 1: Product Type */}
                       <div>
-                        <label className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white mb-2">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <label className="flex items-center justify-between text-xs font-bold text-foreground mb-1.5">
+                          <span className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-emerald-500/15 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                               1
                             </span>
                             Product Type (Category) *
                           </span>
-                          <span className="text-[10px] font-normal text-slate-400">Required</span>
+                          <span className="text-[10px] font-normal text-muted-foreground">Required</span>
                         </label>
                         <select
                           value={quickProductType}
                           onChange={(e) => setQuickProductType(e.target.value)}
                           required
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
                         >
                           <option value="Medicines">Medicines (Antimalarials, Antibiotics, Pain Relievers)</option>
-                          <option value="Food & drinks">Food & Drinks (Milk, Baby Food, Canned Goods, Oil)</option>
+                          <option value="Food & drinks">Food &amp; Drinks (Milk, Baby Food, Canned Goods, Oil)</option>
                           <option value="Cosmetics">Cosmetics (Creams, Serums, Lotions, Soaps)</option>
                           <option value="Electronics">Electronics (Chargers, Batteries, Cables, Plugs)</option>
                           <option value="Baby products">Baby Products (Infant Formula, Diapers, Teething Syrups)</option>
                           <option value="Automotive">Automotive (Engine Oil, Brake Pads, Spark Plugs)</option>
-                          <option value="Alcohol">Alcohol & Spirits (Whisky, Brandy, Wine)</option>
-                          <option value="Fashion">Fashion & Apparel (Sneakers, Clothing, Bags)</option>
+                          <option value="Alcohol">Alcohol &amp; Spirits (Whisky, Brandy, Wine)</option>
+                          <option value="Fashion">Fashion &amp; Apparel (Sneakers, Clothing, Bags)</option>
                           <option value="Other goods">Other Consumer Goods</option>
                         </select>
                       </div>
 
                       {/* Product Name */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1">
+                        <label className="block text-xs font-bold text-foreground mb-1.5">
                           Product / Brand Name (Optional)
                         </label>
                         <Input
@@ -789,15 +813,15 @@ function Home() {
                           value={quickProductName}
                           onChange={(e) => setQuickProductName(e.target.value)}
                           placeholder="e.g. Amatem Forte, Oraimo 20000mAh, Total Quartz 9000"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
                         />
                       </div>
 
                       {/* Data Point 2: Purchased Location & State */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white mb-1">
-                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                          <label className="flex items-center gap-2 text-xs font-bold text-foreground mb-1.5">
+                            <span className="w-5 h-5 rounded-md bg-emerald-500/15 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                               2
                             </span>
                             Purchased Location (Market / Store) *
@@ -808,18 +832,18 @@ function Home() {
                             value={quickLocation}
                             onChange={(e) => setQuickLocation(e.target.value)}
                             placeholder="e.g. Balogun Market, Lagos Island"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-900 dark:text-white mb-1">
+                          <label className="block text-xs font-bold text-foreground mb-1.5">
                             State in Nigeria *
                           </label>
                           <select
                             value={quickState}
                             onChange={(e) => setQuickState(e.target.value)}
                             required
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
                           >
                             {nigerianStates.map((st) => (
                               <option key={st} value={st}>
@@ -832,9 +856,9 @@ function Home() {
 
                       {/* Data Point 3: Amount Paid for it */}
                       <div>
-                        <label className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-white mb-1">
-                          <span className="flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <label className="flex items-center justify-between text-xs font-bold text-foreground mb-1.5">
+                          <span className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-emerald-500/15 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                               3
                             </span>
                             Amount Paid For It (Price in ₦) *
@@ -844,14 +868,14 @@ function Home() {
                           </span>
                         </label>
                         <div className="relative">
-                          <Receipt className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <Receipt className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                           <Input
                             type="text"
                             required
                             value={quickPrice}
                             onChange={(e) => setQuickPrice(e.target.value)}
                             placeholder="e.g. ₦2,500"
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-input bg-card text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500 h-11"
                           />
                         </div>
                       </div>
@@ -859,13 +883,13 @@ function Home() {
                       <Button
                         type="submit"
                         disabled={isSubmittingQuick}
-                        className="w-full py-3.5 rounded-2xl font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-lg shadow-emerald-600/20 transition cursor-pointer flex items-center justify-center gap-2 h-12"
+                        className="w-full py-3.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 transition cursor-pointer flex items-center justify-center gap-2 h-12"
                       >
                         <ShieldAlert className="w-4 h-4" />
                         <span>{isSubmittingQuick ? "Logging Incident to AI Queue..." : "Submit Quick Alert to Database"}</span>
                       </Button>
 
-                      <p className="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5">
+                      <p className="text-[11px] text-center text-muted-foreground flex items-center justify-center gap-1.5">
                         <Lock className="w-3 h-3 text-emerald-500 shrink-0" />
                         <span>Direct database storage &bull; Anonymous whistleblower protection</span>
                       </p>
@@ -876,7 +900,7 @@ function Home() {
 
               {/* Graphic Guide */}
               <div className="lg:col-span-5 space-y-4">
-                <div className="p-3 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl overflow-hidden group bg-card">
+                <div className="p-3 rounded-3xl border border-border shadow-sm overflow-hidden group bg-card">
                   <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-slate-950">
                     <img
                       src="/images/quick-intake-data.jpg"
@@ -894,37 +918,37 @@ function Home() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-secondary/40 p-4">
                     <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Tag className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">1. Product Type</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      <h4 className="text-xs font-bold text-foreground">1. Product Type</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                         Identifies the regulatory authority (NAFDAC for drugs/food, SON for parts) and risk rating.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-secondary/40 p-4">
                     <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <MapPin className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">2. Purchased Location</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      <h4 className="text-xs font-bold text-foreground">2. Purchased Location</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                         Pins the incident to trade hotspots (Idumota, Alaba, Sabon Gari) to trigger localized alerts.
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-4">
+                  <div className="flex items-start gap-3 rounded-2xl border border-border/80 bg-secondary/40 p-4">
                     <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">3. Amount Paid For It</h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      <h4 className="text-xs font-bold text-foreground">3. Amount Paid For It</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                         Detects abnormal price undercutting used by counterfeit syndicates to dump hazardous goods fast.
                       </p>
                     </div>
@@ -936,18 +960,18 @@ function Home() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 8. 10 MONITORED NIGERIAN MARKET SECTORS (Direct from /8000 route)          */}
+        {/* 8. 10 MONITORED NIGERIAN MARKET SECTORS                                   */}
         {/* ========================================================================= */}
-        <section className="py-14 sm:py-16 bg-slate-100/70 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800/80">
+        <section className="py-14 sm:py-20 bg-secondary/15 border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-2 sm:space-y-3">
-              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+            <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-2.5">
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 Surveillance Categories
               </span>
-              <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 dark:text-white">
+              <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-foreground">
                 Nigeria's Most Vulnerable Counterfeit Sectors
               </h2>
-              <p className="text-xs sm:text-sm lg:text-base text-slate-600 dark:text-slate-400">
+              <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">
                 Fakes aren't just a nuisance—in pharmaceuticals, baby nutrition, and auto parts, they are fatal. Fake9ja monitors every critical sector.
               </p>
             </div>
@@ -958,25 +982,25 @@ function Home() {
                 return (
                   <div
                     key={sector.name}
-                    className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-card hover:border-emerald-500/50 hover:shadow-lg transition group flex flex-col justify-between"
+                    className="p-4 sm:p-5 rounded-2xl border border-border bg-card hover:border-emerald-500/40 hover:shadow-md transition-all duration-200 group flex flex-col justify-between"
                   >
                     <div>
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                         <IconComponent className="w-5 h-5" />
                       </div>
-                      <h3 className="font-heading font-bold text-sm text-slate-900 dark:text-white mb-1 leading-snug">
+                      <h3 className="font-heading font-bold text-sm text-foreground mb-1 leading-snug">
                         {sector.name}
                       </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 truncate">
+                      <p className="text-[11px] text-muted-foreground mb-2 truncate">
                         Target: {sector.fakes}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] pt-3 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-between text-[10px] pt-3 border-t border-border">
                       <span className="font-semibold text-red-500">{sector.risk} Risk</span>
                       <Link
                         to="/community"
                         search={{ category: sector.category }}
-                        className="text-emerald-500 hover:underline font-medium"
+                        className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
                       >
                         Explore &rarr;
                       </Link>
@@ -991,17 +1015,17 @@ function Home() {
         {/* ========================================================================= */}
         {/* 9. INTERACTIVE "SPOT THE COUNTERFEIT" MODULE                              */}
         {/* ========================================================================= */}
-        <section className="py-14 sm:py-20">
+        <section className="py-14 sm:py-20 border-b border-border bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               <div className="lg:col-span-5 space-y-5 sm:space-y-6">
-                <span className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                  Buyer Forensics & Education
+                <span className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                  Buyer Forensics &amp; Education
                 </span>
-                <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 dark:text-white leading-tight">
+                <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-foreground leading-tight">
                   How To Spot Fakes in Nigerian Open Markets
                 </h2>
-                <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm lg:text-base leading-relaxed">
+                <p className="text-muted-foreground text-xs sm:text-sm lg:text-base leading-relaxed">
                   Counterfeit syndicates in Alaba, Idumota, and Ariaria replicate outer packaging with 95% accuracy. Here are the microscopic telltales that give them away:
                 </p>
 
@@ -1011,9 +1035,9 @@ function Home() {
                       <Check className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">NAFDAC Green Scratch-and-Pin (MAS)</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
-                        Genuine antimalarials & antibiotics feature Mobile Authentication Service codes. SMS free to 38353.
+                      <h4 className="font-bold text-sm text-foreground">NAFDAC Green Scratch-and-Pin (MAS)</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                        Genuine antimalarials &amp; antibiotics feature Mobile Authentication Service codes. SMS free to 38353.
                       </p>
                     </div>
                   </div>
@@ -1023,8 +1047,8 @@ function Home() {
                       <Check className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">Embossed Expiry vs Printed Dot-Matrix</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
+                      <h4 className="font-bold text-sm text-foreground">Embossed Expiry vs Printed Dot-Matrix</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
                         Counterfeiters often use flat thermal ink that wipes away with wet methylated spirit. Real factories deboss or laser-etch.
                       </p>
                     </div>
@@ -1035,8 +1059,8 @@ function Home() {
                       <Check className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">Unusual Price Discrepancies</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
+                      <h4 className="font-bold text-sm text-foreground">Unusual Price Discrepancies</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
                         If a ₦6,500 medicine is being sold for ₦2,200 in a motor park or roadside stall, it is 99% counterfeit chalk or water.
                       </p>
                     </div>
@@ -1054,17 +1078,17 @@ function Home() {
               <div className="lg:col-span-7">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {/* Original Anatomy Card */}
-                  <div className="p-5 sm:p-6 rounded-3xl border-2 border-emerald-500/40 relative bg-card shadow-lg">
+                  <div className="p-5 sm:p-6 rounded-3xl border border-emerald-500/40 relative bg-card shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-500 text-white">Original</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-emerald-600 text-white">Original</span>
                       <BadgeCheck className="w-5 h-5 text-emerald-500" />
                     </div>
-                    <div className="h-40 sm:h-44 bg-emerald-950/20 rounded-2xl border border-emerald-500/20 flex flex-col items-center justify-center p-4 text-center mb-4">
-                      <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-400 mb-2" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Genuine Manufacturer Quality</span>
-                      <span className="text-xs text-emerald-400 mt-1">Precision laser hologram</span>
+                    <div className="h-40 sm:h-44 bg-emerald-500/5 rounded-2xl border border-emerald-500/20 flex flex-col items-center justify-center p-4 text-center mb-4">
+                      <ShieldCheck className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-500 mb-2" />
+                      <span className="text-xs sm:text-sm font-bold text-foreground">Genuine Manufacturer Quality</span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Precision laser hologram</span>
                     </div>
-                    <ul className="text-xs space-y-2 text-slate-600 dark:text-slate-300">
+                    <ul className="text-xs space-y-2 text-muted-foreground">
                       <li className="flex items-center gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Crisp micro-printing on blister packs
                       </li>
@@ -1078,19 +1102,19 @@ function Home() {
                   </div>
 
                   {/* Counterfeit Anatomy Card */}
-                  <div className="p-5 sm:p-6 rounded-3xl border-2 border-red-500/40 relative bg-card shadow-lg">
+                  <div className="p-5 sm:p-6 rounded-3xl border border-red-500/40 relative bg-card shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-red-500 text-white">Counterfeit</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-red-600 text-white">Counterfeit</span>
                       <AlertTriangle className="w-5 h-5 text-red-500" />
                     </div>
-                    <div className="h-40 sm:h-44 bg-red-950/20 rounded-2xl border border-red-500/20 flex flex-col items-center justify-center p-4 text-center mb-4">
-                      <ShieldX className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 mb-2" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Substandard Clone</span>
-                      <span className="text-xs text-red-400 mt-1">Blurred barcode & cheap glue</span>
+                    <div className="h-40 sm:h-44 bg-red-500/5 rounded-2xl border border-red-500/20 flex flex-col items-center justify-center p-4 text-center mb-4">
+                      <ShieldX className="w-10 h-10 sm:w-12 sm:h-12 text-red-500 mb-2" />
+                      <span className="text-xs sm:text-sm font-bold text-foreground">Substandard Clone</span>
+                      <span className="text-xs text-red-500 mt-1">Blurred barcode &amp; cheap glue</span>
                     </div>
-                    <ul className="text-xs space-y-2 text-slate-600 dark:text-slate-300">
+                    <ul className="text-xs space-y-2 text-muted-foreground">
                       <li className="flex items-center gap-2">
-                        <AlertOctagon className="w-3.5 h-3.5 text-red-500 shrink-0" /> Misspelled ingredients & typo errors
+                        <AlertOctagon className="w-3.5 h-3.5 text-red-500 shrink-0" /> Misspelled ingredients &amp; typo errors
                       </li>
                       <li className="flex items-center gap-2">
                         <AlertOctagon className="w-3.5 h-3.5 text-red-500 shrink-0" /> Fake or duplicate NAFDAC / SONCAP codes
@@ -1109,21 +1133,21 @@ function Home() {
         {/* ========================================================================= */}
         {/* 10. TOP NIGERIAN MARKET HOTSPOTS LEADERBOARD                              */}
         {/* ========================================================================= */}
-        <section className="py-14 sm:py-16 bg-slate-100/70 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800">
+        <section className="py-14 sm:py-20 bg-secondary/15 border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
               <div>
                 <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">
                   High Risk Surveillance
                 </span>
-                <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 dark:text-white mt-2">
+                <h2 className="font-heading font-black text-2xl sm:text-3xl text-foreground mt-2">
                   Top Nigerian Market Hotspots
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   Tracked trading centers with highest concentration of reported counterfeit activity.
                 </p>
               </div>
-              <Button asChild variant="outline" className="rounded-xl border-slate-200 dark:border-slate-800 text-xs font-semibold shrink-0 cursor-pointer h-10">
+              <Button asChild variant="outline" className="rounded-xl border-border text-xs font-semibold shrink-0 cursor-pointer h-10">
                 <Link to="/community">
                   <span>View Full Market Map</span>
                   <ArrowRight className="w-4 h-4 ml-1.5" />
@@ -1143,30 +1167,30 @@ function Home() {
                     { id: 6, name: "Computer Village, Ikeja", state: "Lagos", risk_level: "medium", incident_count: 39 },
                   ]
               ).map((hotspot: any) => (
-                <div key={hotspot.id} className="p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-card hover:border-emerald-500/50 transition">
+                <div key={hotspot.id} className="p-5 sm:p-6 rounded-3xl border border-border bg-card hover:border-emerald-500/40 hover:shadow-md transition-all duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span className="font-bold text-xs uppercase tracking-wider text-slate-400">{hotspot.state} State</span>
+                      <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground">{hotspot.state} State</span>
                     </div>
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         hotspot.risk_level === "high"
-                          ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                          : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          ? "bg-red-500/15 text-red-500 border border-red-500/30"
+                          : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
                       }`}
                     >
                       {hotspot.risk_level} Risk
                     </span>
                   </div>
 
-                  <h3 className="font-heading font-black text-lg sm:text-xl text-slate-900 dark:text-white mb-2">
+                  <h3 className="font-heading font-black text-lg sm:text-xl text-foreground mb-2">
                     {hotspot.name}
                   </h3>
 
-                  <div className="flex items-center justify-between text-xs pt-4 border-t border-slate-200 dark:border-slate-800/80">
-                    <span className="text-slate-500">Incident Flags:</span>
-                    <span className="font-heading font-black text-base text-slate-900 dark:text-white">
+                  <div className="flex items-center justify-between text-xs pt-4 border-t border-border">
+                    <span className="text-muted-foreground">Incident Flags:</span>
+                    <span className="font-heading font-black text-base text-foreground">
                       {hotspot.incident_count} reports
                     </span>
                   </div>
@@ -1179,61 +1203,61 @@ function Home() {
         {/* ========================================================================= */}
         {/* 11. 4-STEP CITIZEN REPORTING WORKFLOW                                     */}
         {/* ========================================================================= */}
-        <section className="py-14 sm:py-20">
+        <section className="py-14 sm:py-20 border-b border-border bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-2.5 sm:space-y-3">
-              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-2.5">
+              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 100% Free Public Good
               </span>
-              <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-slate-900 dark:text-white">
+              <h2 className="font-heading font-black text-2xl sm:text-3xl lg:text-4xl text-foreground">
                 How Fake9ja Protects Your Family
               </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm">
-                No subscription, no coupon codes, no payment ever. Direct citizen intelligence.
+              <p className="text-muted-foreground text-xs sm:text-sm">
+                No subscription, no fees, no payment ever. Direct citizen intelligence.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 sm:gap-6">
               {/* Step 1 */}
-              <div className="p-6 rounded-3xl text-center space-y-3 border border-slate-200 dark:border-slate-800 bg-card">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-lg shadow-emerald-600/30">
+              <div className="p-6 rounded-3xl text-center space-y-3 border border-border bg-card shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-md shadow-emerald-600/30">
                   1
                 </div>
-                <h3 className="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white">Spot & Snap</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Spot &amp; Snap</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   Take a clear photo of the suspicious medicine or item, packaging defects, batch code, or stall location.
                 </p>
               </div>
 
               {/* Step 2 */}
-              <div className="p-6 rounded-3xl text-center space-y-3 border border-slate-200 dark:border-slate-800 bg-card">
-                <div className="w-12 h-12 rounded-2xl bg-teal-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-lg shadow-teal-600/30">
+              <div className="p-6 rounded-3xl text-center space-y-3 border border-border bg-card shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-teal-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-md shadow-teal-600/30">
                   2
                 </div>
-                <h3 className="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white">Log (Anonymous)</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Log (Anonymous)</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   Submit the incident in 2 minutes. You can remain totally anonymous. Receive an instant tracking ID.
                 </p>
               </div>
 
               {/* Step 3 */}
-              <div className="p-6 rounded-3xl text-center space-y-3 border border-slate-200 dark:border-slate-800 bg-card">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-lg shadow-cyan-600/30">
+              <div className="p-6 rounded-3xl text-center space-y-3 border border-border bg-card shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-md shadow-cyan-600/30">
                   3
                 </div>
-                <h3 className="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white">Triage & Analysis</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Triage &amp; Analysis</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   Our inspection triage cross-checks the batch number, manufacturer specs, and market incident history.
                 </p>
               </div>
 
               {/* Step 4 */}
-              <div className="p-6 rounded-3xl text-center space-y-3 border border-slate-200 dark:border-slate-800 bg-card">
-                <div className="w-12 h-12 rounded-2xl bg-red-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-lg shadow-red-600/30">
+              <div className="p-6 rounded-3xl text-center space-y-3 border border-border bg-card shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-red-600 text-white font-heading font-black text-xl flex items-center justify-center mx-auto shadow-md shadow-red-600/30">
                   4
                 </div>
-                <h3 className="font-heading font-bold text-base sm:text-lg text-slate-900 dark:text-white">Market Advisory</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Market Advisory</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   Public alerts notify shoppers nationwide, and confirmed health hazards are escalated to regulatory bodies.
                 </p>
               </div>
@@ -1243,7 +1267,7 @@ function Home() {
               <Button
                 asChild
                 size="lg"
-                className="px-7 py-3.5 sm:px-8 sm:py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/20 transition cursor-pointer h-12"
+                className="px-7 py-3.5 sm:px-8 sm:py-4 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/20 transition cursor-pointer h-12"
               >
                 <Link to="/report">
                   <PlusCircle className="w-5 h-5 mr-2" />
@@ -1257,13 +1281,13 @@ function Home() {
         {/* ========================================================================= */}
         {/* 12. FAQ ACCORDION                                                         */}
         {/* ========================================================================= */}
-        <section className="py-14 sm:py-16 bg-slate-100/70 dark:bg-slate-900/40 border-t border-slate-200 dark:border-slate-800">
+        <section className="py-14 sm:py-20 bg-secondary/15 border-b border-border">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-12">
-              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 dark:text-white">
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-foreground">
                 Frequently Asked Questions
               </h2>
-              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-2">
+              <p className="text-muted-foreground text-xs sm:text-sm mt-2">
                 Everything you need to know about reporting on Fake9ja.
               </p>
             </div>
@@ -1272,8 +1296,8 @@ function Home() {
               {[
                 {
                   id: 1,
-                  q: "Is Fake9ja really 100% free? Are there any hidden fees or coupon codes?",
-                  a: "Yes, Fake9ja is completely free for all citizens and lawful manufacturers. There are zero fees, zero checkout requirements, and no discount coupon codes needed. Everything on this platform is dedicated to protecting Nigerian consumers as a free public service.",
+                  q: "Is Fake9ja really 100% free? Are there any hidden fees or charges?",
+                  a: "Yes, Fake9ja is completely free for all citizens and lawful manufacturers. There are zero fees, zero checkout requirements, and no payment needed. Everything on this platform is dedicated to protecting Nigerian consumers as a free public service.",
                 },
                 {
                   id: 2,
@@ -1288,21 +1312,21 @@ function Home() {
               ].map((faq) => {
                 const isOpen = openFaq === faq.id;
                 return (
-                  <div key={faq.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-card overflow-hidden">
+                  <div key={faq.id} className="rounded-2xl border border-border bg-card overflow-hidden">
                     <button
                       type="button"
                       onClick={() => setOpenFaq(isOpen ? null : faq.id)}
-                      className="w-full p-4 sm:p-5 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between cursor-pointer gap-3"
+                      className="w-full p-4 sm:p-5 text-left font-bold text-sm sm:text-base text-foreground flex items-center justify-between cursor-pointer gap-3"
                     >
                       <span>{faq.q}</span>
                       <ChevronDown
                         className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                          isOpen ? "rotate-180 text-emerald-500" : "text-slate-400"
+                          isOpen ? "rotate-180 text-emerald-500" : "text-muted-foreground"
                         }`}
                       />
                     </button>
                     {isOpen && (
-                      <div className="p-4 sm:p-5 pt-0 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-200 dark:border-slate-800">
+                      <div className="p-4 sm:p-5 pt-0 text-xs sm:text-sm text-muted-foreground leading-relaxed border-t border-border">
                         {faq.a}
                       </div>
                     )}
@@ -1319,11 +1343,11 @@ function Home() {
         <section className="px-4 py-12 sm:px-6">
           <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 rounded-3xl bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border border-emerald-500/30 p-6 sm:p-10 shadow-xl md:flex-row text-white text-center md:text-left">
             <div>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
-                <ShieldAlert className="size-3" /> Collective Power
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-0.5 text-[11px] font-bold text-emerald-300 uppercase tracking-wider">
+                <ShieldAlert className="size-3.5" /> Collective Power
               </span>
-              <h2 className="mt-2 font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-white">
-                We(Nigerians) have the power to solve this.
+              <h2 className="mt-2.5 font-display text-xl sm:text-2xl md:text-3xl font-extrabold text-white">
+                We (Nigerians) have the power to solve this.
               </h2>
               <p className="mt-1 max-w-lg text-xs sm:text-sm text-slate-300">
                 Together we can stop product adulteration in Nigeria. Every piece of data you submit brings our AI model one step closer to eliminating fake goods.
@@ -1332,7 +1356,7 @@ function Home() {
             <Button
               asChild
               size="lg"
-              className="rounded-xl font-bold text-xs h-11 px-5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 shrink-0 cursor-pointer"
+              className="rounded-xl font-bold text-xs h-11 px-5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/25 shrink-0 cursor-pointer"
             >
               <Link to="/report">
                 Submit Product Evidence Now <ArrowRight className="size-3.5 ml-1.5" />

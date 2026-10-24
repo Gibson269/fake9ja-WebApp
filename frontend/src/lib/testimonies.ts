@@ -1,3 +1,13 @@
+import alarmCoverImg from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC.jpg";
+import alarmVid1 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC.mp4";
+import alarmVid2 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC2.mp4";
+import alarmVid4 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC 4.mp4";
+import alarmVid5 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC 5.mp4";
+import alarmVid6 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC 66.mp4";
+import alarmVid7 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC 7.mp4";
+import alarmVid8 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC 8.mp4";
+import alarmVid10 from "./Fak€ Products- Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market, Call On NAFDAC 10.mp4";
+
 export type VideoPlatform = "YouTube" | "Instagram" | "TikTok" | "Facebook" | "X" | "Organic" | "Local" | "Other";
 
 export interface VideoTestimony {
@@ -28,6 +38,16 @@ export function parseVideoSource(rawUrl: string): {
   inferredType: "instagram" | "local" | "embed" | "youtube" | "tiktok" | "facebook" | "organic";
 } {
   const url = (rawUrl || "").trim();
+
+  // Direct MP4 / WebM / Local video
+  if (/\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url) || url.startsWith("/videos/") || url.startsWith("/storage/") || url.startsWith("blob:") || url.startsWith("data:")) {
+    return {
+      platform: "Organic",
+      embedUrl: "",
+      localVideoUrl: url,
+      inferredType: "organic",
+    };
+  }
 
   // YouTube
   const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/i);
@@ -77,16 +97,6 @@ export function parseVideoSource(rawUrl: string): {
     };
   }
 
-  // Direct MP4 / WebM / Local video
-  if (/\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(url) || url.startsWith("/videos/") || url.startsWith("/storage/")) {
-    return {
-      platform: "Organic",
-      embedUrl: "",
-      localVideoUrl: url,
-      inferredType: "organic",
-    };
-  }
-
   return {
     platform: "Other",
     embedUrl: url,
@@ -95,9 +105,9 @@ export function parseVideoSource(rawUrl: string): {
 }
 
 export function getVideoThumbnail(item: Partial<VideoTestimony> | null | undefined): string {
-  if (!item) return "/images/consumer-vigilance.jpg";
+  if (!item) return alarmCoverImg || "/videos/alarm/alarm-cover.jpg";
 
-  // 1. If explicit valid thumbnail is present and not the generic tablet placeholder
+  // 1. If explicit valid thumbnail is present and not the generic placeholder
   if (
     item.thumbnailUrl &&
     !item.thumbnailUrl.includes("photo-1584308666744-24d5c474f2ae") &&
@@ -114,137 +124,192 @@ export function getVideoThumbnail(item: Partial<VideoTestimony> | null | undefin
     return `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
   }
 
-  // 3. Keyword / Category contextual matching
-  const text = `${item.title || ""} ${item.tag || ""} ${item.summary || ""} ${item.aiFeature || ""}`.toLowerCase();
-  if (text.includes("oil") || text.includes("engine") || text.includes("auto") || text.includes("motor")) {
-    return "/images/counterfeit-oil.jpg";
-  }
-  if (text.includes("drink") || text.includes("traffic") || text.includes("tunde") || text.includes("commuter") || text.includes("bottle") || text.includes("water")) {
-    return "/images/quick-intake-data.jpg";
-  }
-  if (text.includes("cosmetic") || text.includes("lotion") || text.includes("cream") || text.includes("bleach") || text.includes("baby")) {
-    return "/images/counterfeit-cosmetics.jpg";
-  }
-  if (text.includes("rice") || text.includes("food") || text.includes("grain") || text.includes("sabon gari") || text.includes("seasoning")) {
-    return "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80";
-  }
-  if (text.includes("charger") || text.includes("phone") || text.includes("electronic") || text.includes("alaba") || text.includes("plug")) {
-    return "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop&q=80";
-  }
-  if (text.includes("malaria") || text.includes("syrup") || text.includes("antibiotic") || text.includes("cough") || text.includes("pharma")) {
-    return "/images/counterfeit-malaria.jpg";
-  }
-
-  return "/images/consumer-vigilance.jpg";
+  // 3. Fallback to master alarm series cover
+  return alarmCoverImg || "/videos/alarm/alarm-cover.jpg";
 }
 
 export const initialVideoTestimonies: VideoTestimony[] = [
   {
-    id: "ig-daveplay-counterfeit-alarm",
-    type: "instagram",
-    title: "Fake Products: Nigerians Raise Alarm Over Counterfeit Goods Flooding the Market",
+    id: "alarm-video-part-1",
+    type: "local",
+    title: "Fak€ Products: Nigerians Raise Alarm Over Count€rf€!t Goods Fl00ding the Market (Part 1)",
     authorName: "Daveplay Blog",
     authorHandle: "@daveplayblog",
-    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=11&stkn=MW5xNGp0MnJpcjZsNA==",
-    embedUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/embed/",
-    thumbnailUrl: "/images/consumer-vigilance.jpg",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=1",
+    embedUrl: "",
+    localVideoUrl: alarmVid1,
+    thumbnailUrl: alarmCoverImg,
     platform: "Instagram",
-    location: "Lagos / National Markets",
-    summary: "Viral citizen outcry showing fake and adulterated goods circulating in open markets, urging NAFDAC and consumers to take immediate collective action.",
-    quote: "Nigerians are raising the alarm on counterfeit goods infiltrating daily food and medicines. We must look closer at what we buy.",
-    date: "September 2026",
+    location: "Lagos / National Open Markets",
+    summary: "Viral citizen exposé exposing rampant counterfeit fast-moving consumer goods, Oral-B toothpaste counterfeits, and duplicate packaging circulating freely in major commercial centers.",
+    quote: "Nigerians are raising the alarm on counterfeit goods infiltrating daily food and consumables. We must look closer at what we buy.",
+    date: "October 2026",
     tag: "Market Alert",
-    duration: "1:24",
-    aiFeature: "Foil seal light refraction, cap crimping flaws, and blurry regulatory stamps",
+    duration: "1:00",
+    aiFeature: "Oral-B crimp seal analysis, print kerning distortion & barcode parity validation",
   },
   {
-    id: "ig-tunde-ednut-commute-alert",
-    type: "instagram",
-    title: "Public Alert on Market Adulteration & Dangerous Consumption",
-    authorName: "King Tunde Ednut",
-    authorHandle: "@mazitundeednut",
-    sourceUrl: "https://www.instagram.com/p/Dd3lqxWkaO_/?img_index=1&stkn=cjE4bnp6NDl4dHVy",
-    embedUrl: "https://www.instagram.com/p/Dd3lqxWkaO_/embed/",
-    thumbnailUrl: "/images/quick-intake-data.jpg",
+    id: "alarm-video-part-2",
+    type: "local",
+    title: "Fak€ Products: Adulterated Consumables & Tampered Household Goods (Part 2)",
+    authorName: "Daveplay Blog",
+    authorHandle: "@daveplayblog",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=2",
+    embedUrl: "",
+    localVideoUrl: alarmVid2,
+    thumbnailUrl: alarmCoverImg,
     platform: "Instagram",
-    location: "Lagos Transit / Commuter Hubs",
-    summary: "Crucial public awareness video highlighting street-sold drinks and questionable packaged goods sold to everyday commuters in traffic.",
-    quote: "This is why vigilance is crucial: dangerous, adulterated drinks and items end up in unsuspecting hands every single day.",
-    date: "September 2026",
+    location: "Idumota & Trade Fair Complex, Lagos",
+    summary: "Citizen demonstration comparing authentic manufacturer goods with hazardous knockoffs sold at regular retail prices across popular shopping hubs.",
+    quote: "If you observe the cap seal and the print quality carefully, you will immediately notice the difference between original and clone.",
+    date: "October 2026",
     tag: "Consumer Vigilance",
-    duration: "0:58",
-    aiFeature: "Bottle plastic thickness, tamper band break points, and counterfeit liquid color tone",
+    duration: "1:00",
+    aiFeature: "Tamper band breakage detection & packaging gloss micro-sheen variance",
   },
   {
-    id: "yt-nafdac-open-market-raid",
-    type: "youtube",
-    title: "Counterfeit Medicine Alert & Laboratory Forensics Briefing",
-    authorName: "Consumer Protection Sentinel",
-    authorHandle: "@consumer_radar_ng",
-    sourceUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    embedUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    thumbnailUrl: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
-    platform: "YouTube",
-    location: "Onitsha Head Bridge Market, Anambra",
-    summary: "Forensic breakdown showing subtle variations in cloned pharmaceutical blister foils, mismatched batch numbering, and missing NAFDAC scratch PINs.",
-    quote: "We (Nigerians) have the power to solve this. When we upload suspicious samples, the AI system learns to identify clones in seconds.",
-    date: "September 2026",
-    tag: "Forensic Investigation",
-    duration: "2:15",
-    aiFeature: "Micro-font kerning anomalies and barcode parity checksum validation",
-  },
-  {
-    id: "local-citizen-voice-abuja",
-    type: "organic",
-    title: "Citizen Sentinel: Exposing Cloned Antibiotics in Wuse Market",
-    authorName: "Amina & Chidi",
-    authorHandle: "Citizen Report #EIE-NG-402",
-    sourceUrl: "#",
+    id: "alarm-video-part-4",
+    type: "local",
+    title: "Fak€ Products: Chemical Food Coatings & Synthetic Produce Alert (Part 3)",
+    authorName: "Citizen Consumer Sentinel",
+    authorHandle: "@citizen_sentinel_ng",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=4",
     embedUrl: "",
-    localVideoUrl: "/videos/fake-medicine-alert.mp4",
-    thumbnailUrl: "/images/counterfeit-malaria.jpg",
+    localVideoUrl: alarmVid4,
+    thumbnailUrl: alarmCoverImg,
     platform: "Organic",
-    location: "Wuse Market, Abuja",
-    summary: "Direct citizen phone recording demonstrating how foil texture and barcode print misalignments revealed a cloned malaria prescription pack.",
-    quote: "Together as Nigerians we can stop this. When we upload what we see, the AI model learns every fake print pattern.",
+    location: "Mile 12 & Bodija Markets, Ibadan / Lagos",
+    summary: "Forensic hot-water test uncovering dangerous artificial paraffin wax coatings and toxic preservation chemicals applied to fresh market produce to mask decay.",
+    quote: "Look at the boiling water test—the artificial wax layer melts off right before your eyes. This is what unsuspecting families consume!",
     date: "October 2026",
-    tag: "Organic Citizen Video",
-    duration: "0:45",
-    aiFeature: "Micro-font kerning anomalies and barcode parity checksum validation",
+    tag: "Food Safety Alert",
+    duration: "0:42",
+    aiFeature: "Wax melting light refraction & surface color saturation index",
   },
   {
-    id: "local-citizen-onitsha-oil",
-    type: "organic",
-    title: "Undercover Motorist: Identifying Diluted Engine Oil in Onitsha",
-    authorName: "Engr. Obinna",
-    authorHandle: "Citizen Report #EIE-NG-789",
-    sourceUrl: "#",
+    id: "alarm-video-part-5",
+    type: "local",
+    title: "Fak€ Products: Diluted Drinks & Duplicate Beverage Packaging (Part 4)",
+    authorName: "Citizen Vigilance Hub",
+    authorHandle: "@nigeria_market_watch",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=5",
     embedUrl: "",
-    localVideoUrl: "/videos/onitsha-oil-check.mp4",
-    thumbnailUrl: "/images/counterfeit-oil.jpg",
-    platform: "Organic",
-    location: "Main Market, Onitsha",
-    summary: "Video inspection showing cloned manufacturer labels with peeling holographic stickers on synthetic motor lubricants.",
-    quote: "If we don't document it, more engines will knock. Submitting this video teaches the AI to flag this cloned batch immediately.",
+    localVideoUrl: alarmVid5,
+    thumbnailUrl: alarmCoverImg,
+    platform: "TikTok",
+    location: "Onitsha Main Market, Anambra",
+    summary: "Undercover footage exposing syndicates refilling branded liquor, soft drinks, and bottled water with unwholesome concoctions and resealing with counterfeit caps.",
+    quote: "They reuse original empty bottles and recap them with adulterated spirits and soft drinks. Check the crown cap ridge before drinking!",
     date: "October 2026",
-    tag: "Organic Citizen Video",
-    duration: "1:15",
-    aiFeature: "Hologram angle sheen and cap thread variance detection",
+    tag: "Beverages Alert",
+    duration: "1:00",
+    aiFeature: "Cap crown re-crimping ridges & fill-line height anomaly detection",
+  },
+  {
+    id: "alarm-video-part-6",
+    type: "local",
+    title: "Fak€ Products: Cloned Prescription Drugs & Distorted Foil Seals (Part 5)",
+    authorName: "Daveplay Blog",
+    authorHandle: "@daveplayblog",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=6",
+    embedUrl: "",
+    localVideoUrl: alarmVid6,
+    thumbnailUrl: alarmCoverImg,
+    platform: "Instagram",
+    location: "Sabon Gari Market, Kano",
+    summary: "Urgent market warning identifying cloned pharmaceutical blister packs with fake batch numbers and blurred typography circulating without regulatory clearance.",
+    quote: "Counterfeit antimalarials and antibiotics have flooded open drug sections. Always verify the NAFDAC registration number and scratch PIN.",
+    date: "October 2026",
+    tag: "Pharmaceutical Raid",
+    duration: "0:57",
+    aiFeature: "Foil texture grain analysis & batch code typeface mismatch",
+  },
+  {
+    id: "alarm-video-part-7",
+    type: "local",
+    title: "Fak€ Products: Adulterated Baby Formula & Toxic Cosmetics (Part 6)",
+    authorName: "Consumer Rights Advocacy NG",
+    authorHandle: "@consumer_advocacy_ng",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=7",
+    embedUrl: "",
+    localVideoUrl: alarmVid7,
+    thumbnailUrl: alarmCoverImg,
+    platform: "Organic",
+    location: "Alaba International & Computer Village, Lagos",
+    summary: "Citizen testing highlighting mercury-heavy cosmetic clones, counterfeit lotions, and adulterated infant formula with compromised security foils.",
+    quote: "Our children and mothers are at risk. Toxic chemical bleaching creams and cloned baby food are killing Nigerians slowly.",
+    date: "October 2026",
+    tag: "Cosmetics & Infant Alert",
+    duration: "1:00",
+    aiFeature: "Security foil seal integrity & micro-print alignment verification",
+  },
+  {
+    id: "alarm-video-part-8",
+    type: "local",
+    title: "Fak€ Products: Recycled Engine Oil & Electrical Hazard Hardware (Part 7)",
+    authorName: "Daveplay Blog",
+    authorHandle: "@daveplayblog",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=8",
+    embedUrl: "",
+    localVideoUrl: alarmVid8,
+    thumbnailUrl: alarmCoverImg,
+    platform: "Instagram",
+    location: "Ladipo Auto Spares Market, Lagos",
+    summary: "Detailed investigation revealing recycled black sludge packaged into duplicate motor oil canisters and hazardous undersized electrical cables.",
+    quote: "Rebottled transformer oil sold as synthetic lubricant knocks your car engine in under a month. Inspect the plastic seam before paying.",
+    date: "October 2026",
+    tag: "Automotive Alert",
+    duration: "0:55",
+    aiFeature: "Holographic tamper sticker sheen & canister mold seam irregularity",
+  },
+  {
+    id: "alarm-video-part-10",
+    type: "local",
+    title: "Fak€ Products: Urgent Citizen Call On NAFDAC & Enforcement Action (Part 8)",
+    authorName: "Daveplay Blog",
+    authorHandle: "@daveplayblog",
+    sourceUrl: "https://www.instagram.com/p/Dc3JLiuCMS9/?img_index=10",
+    embedUrl: "",
+    localVideoUrl: alarmVid10,
+    thumbnailUrl: alarmCoverImg,
+    platform: "Instagram",
+    location: "National Appeal / Abuja Headquarters",
+    summary: "Final urgent call to action demanding nationwide regulatory crackdowns, intensified market raids, and public crowdsourced surveillance against counterfeit cartels.",
+    quote: "NAFDAC and security agencies must step in immediately. Every citizen must report counterfeit products to protect Nigerian lives.",
+    date: "October 2026",
+    tag: "NAFDAC Urgent Appeal",
+    duration: "0:09",
+    aiFeature: "Official regulatory stamp validation & emergency priority flag",
   },
 ];
 
-const STORAGE_KEY = "fake9ja_video_testimonies_v3";
+const STORAGE_KEY = "fake9ja_video_testimonies_alarm_v4";
 
 export function loadStoredTestimonies(): VideoTestimony[] {
   if (typeof window === "undefined") return initialVideoTestimonies;
   try {
+    // Purge obsolete legacy demo keys
+    window.localStorage.removeItem("fake9ja_video_testimonies");
+    window.localStorage.removeItem("fake9ja_video_testimonies_v2");
+    window.localStorage.removeItem("fake9ja_video_testimonies_v3");
+
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return initialVideoTestimonies;
+    if (!raw) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialVideoTestimonies));
+      return initialVideoTestimonies;
+    }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      const ids = new Set(parsed.map((item: VideoTestimony) => String(item.id)));
-      const missingInitial = initialVideoTestimonies.filter((init) => !ids.has(String(init.id)));
-      return [...parsed, ...missingInitial];
+      // Filter out any legacy dummy demo ids
+      const filteredParsed = parsed.filter(
+        (item: VideoTestimony) =>
+          !["ig-tunde-ednut-commute-alert", "yt-nafdac-open-market-raid", "local-citizen-voice-abuja", "local-citizen-onitsha-oil"].includes(String(item.id))
+      );
+      const filteredIds = new Set(filteredParsed.map((item: VideoTestimony) => String(item.id)));
+      const missingInitial = initialVideoTestimonies.filter((init) => !filteredIds.has(String(init.id)));
+      const finalItems = [...filteredParsed, ...missingInitial];
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(finalItems));
+      return finalItems;
     }
   } catch (err) {
     console.error("Failed to load video testimonies from localStorage", err);

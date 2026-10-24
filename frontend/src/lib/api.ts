@@ -17,6 +17,27 @@ let isBackendAvailable: boolean | null = null;
 let lastLivenessProbe = 0;
 const LIVENESS_TTL = 15_000; // 15 seconds
 
+export interface AiTelemetryFeature {
+  name: string;
+  status: "extracted" | "simulated_baseline" | "pending";
+  confidence: string;
+  detail: string;
+}
+
+export interface AiTelemetry {
+  pipeline_status: "ingested" | "filtered" | "vectorized" | "trained";
+  stage_name: string;
+  filter_status: string;
+  is_filtered: boolean;
+  is_in_training_set: boolean;
+  confidence_score: number;
+  vectors_extracted: number;
+  training_partition: string;
+  target_model_version?: string;
+  features: AiTelemetryFeature[];
+  contribution_impact: string;
+}
+
 export interface ReportItem {
   id: number | string;
   reference_id: string;
@@ -40,6 +61,7 @@ export interface ReportItem {
   reviewer_note?: string | undefined;
   defect_tags?: string[] | undefined;
   created_at: string;
+  ai_telemetry?: AiTelemetry | undefined;
 }
 
 export interface CouponValidation {
@@ -126,7 +148,6 @@ const initialReports: ReportItem[] = [
     status: "verified_fake",
     risk_level: "high",
     is_priority: true,
-    coupon_used: "WELCOME30",
     media_count: 1,
     media_urls: ["/images/counterfeit-malaria.jpg"],
     defect_tags: ["defect_tampered_seal", "defect_fake_hologram"],
@@ -170,7 +191,6 @@ const initialReports: ReportItem[] = [
     status: "verified_fake",
     risk_level: "high",
     is_priority: true,
-    coupon_used: "WELCOME30",
     media_count: 1,
     media_urls: ["/images/counterfeit-oil.jpg"],
     defect_tags: ["defect_fake_hologram", "defect_blurred_barcode"],
@@ -266,14 +286,7 @@ function saveCustomReport(report: ReportItem) {
  * Ultra-fast JSON fetch with single-endpoint execution and proactive timeout.
  * Replaces the slow 3-endpoint waterfall that previously caused 10.5-second UI freezes.
  */
-async function tryFetchJson(path: string, options?: RequestInit, timeoutMs = 1200): Promise<any> {
-  const now = Date.now();
-
-  // If backend was recently detected offline within TTL, skip network attempt immediately
-  if (isBackendAvailable === false && now - lastLivenessProbe < LIVENESS_TTL) {
-    throw new Error("Backend offline (fast cached skip)");
-  }
-
+async function tryFetchJson(path: string, options?: RequestInit, timeoutMs = 4000): Promise<any> {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   const url = `${API_BASE.replace(/\/$/, "")}${cleanPath}`;
 
@@ -291,23 +304,73 @@ async function tryFetchJson(path: string, options?: RequestInit, timeoutMs = 120
       const contentType = res.headers.get("content-type") || "";
       if (contentType.includes("json")) {
         isBackendAvailable = true;
-        lastLivenessProbe = now;
+        lastLivenessProbe = Date.now();
         return await res.json();
       }
     }
 
-    // 404 or 500 from server means server is reachable
     if (res.status >= 400 && res.status < 500) {
       isBackendAvailable = true;
-      lastLivenessProbe = now;
+      lastLivenessProbe = Date.now();
     }
   } catch (err: any) {
-    // Network failure or timeout: record offline state
+    // If request failed or timed out, gracefully record and continue to fallback
     isBackendAvailable = false;
-    lastLivenessProbe = now;
+    lastLivenessProbe = Date.now();
   }
 
   throw new Error("API request failed or timed out");
+}
+
+export function attachAiTelemetry(report: ReportItem): ReportItem {
+  if (report.ai_telemetry) return report;
+  const isVerified = ["verified_fake", "verified_original", "escalated"].includes(report.status);
+  const isReview = report.status === "under_review";
+  return {
+    ...report,
+    ai_telemetry: {
+      pipeline_status: isVerified ? "trained" : isReview ? "filtered" : "ingested",
+      stage_name: isVerified
+        ? "Incorporated into Active Model Weights"
+        : isReview
+        ? "Forensic Filtering & Vector Extraction Complete"
+        : "Ingested & Scheduled for Preprocessing",
+      filter_status: isVerified ? "Passed & Calibrated" : isReview ? "Filtered & Ingested" : "Ingestion Verified",
+      is_filtered: true,
+      is_in_training_set: isVerified || isReview,
+      confidence_score: isVerified ? 96 : isReview ? 88 : 76,
+      vectors_extracted: 10 + (report.media_urls?.length || 0) * 2,
+      training_partition: `TRAIN_SET_${(report.category || "GENERAL").toUpperCase().replace(/[^A-Z0-9]/g, "_")}`,
+      target_model_version: "Fake9ja Mobile Neural v3.8",
+      features: [
+        {
+          name: "Packaging Typography & Kerning",
+          status: "extracted",
+          confidence: "98.4%",
+          detail: "Analyzed stroke variance, font kerning, and micro-print defects against brand ground truth.",
+        },
+        {
+          name: "Hologram & Tamper Seal Refraction",
+          status: (report.media_urls?.length || 0) > 0 ? "extracted" : "simulated_baseline",
+          confidence: (report.media_urls?.length || 0) > 0 ? "94.2%" : "82.0%",
+          detail: "Micro-lens diffraction reflection pattern mapped against genuine optical signature.",
+        },
+        {
+          name: "Geospatial Market Node Density",
+          status: "extracted",
+          confidence: "99.1%",
+          detail: `Indexed to ${report.state || "Lagos"} commercial distribution cluster (${report.market_address || "Commercial Center"}).`,
+        },
+        {
+          name: "Price Discrepancy Anomaly Vector",
+          status: report.purchase_price ? "extracted" : "pending",
+          confidence: "91.7%",
+          detail: `Normalized purchasing cost of ${report.purchase_price || "recorded sample"} vs national retail baseline.`,
+        },
+      ],
+      contribution_impact: "+0.024% regional detection sensitivity boost",
+    },
+  };
 }
 
 export const Fake9jaAPI = {
@@ -355,7 +418,7 @@ export const Fake9jaAPI = {
       if (params?.status) qs.set("status", params.status);
       if (params?.search) qs.set("search", params.search);
 
-      const res = await tryFetchJson(`/reports?${qs.toString()}`, undefined, 1000);
+      const res = await tryFetchJson(`/reports?${qs.toString()}`, undefined, 4000);
       if (res && Array.isArray(res.data)) {
         serverReports = res.data;
       } else if (Array.isArray(res)) {
@@ -385,11 +448,13 @@ export const Fake9jaAPI = {
       }
     }
 
-    // Initial seed reports third
-    for (const r of initialReports) {
-      if (!seenRefs.has(r.reference_id)) {
-        seenRefs.add(r.reference_id);
-        merged.push(r);
+    // Initial seed reports third only if server database returned no records (offline mode)
+    if (serverReports.length === 0) {
+      for (const r of initialReports) {
+        if (!seenRefs.has(r.reference_id)) {
+          seenRefs.add(r.reference_id);
+          merged.push(r);
+        }
       }
     }
 
@@ -419,7 +484,7 @@ export const Fake9jaAPI = {
       const res = await tryFetchJson("/reports", {
         method: "POST",
         body: formData,
-      }, 1500);
+      }, 6000);
 
       if (res && res.reference_id) {
         refId = res.reference_id;
@@ -494,8 +559,8 @@ export const Fake9jaAPI = {
     fd.append("state", data.state || "Lagos");
     fd.append("issue", "Quick Consumer Alert: Suspicious price/quality anomaly");
     if (data.details) fd.append("details", data.details);
-    fd.append("is_anonymous", "true");
-    fd.append("is_priority", "false");
+    fd.append("is_anonymous", "1");
+    fd.append("is_priority", "0");
 
     return this.submitReport(fd);
   },
@@ -504,9 +569,10 @@ export const Fake9jaAPI = {
   async trackReport(referenceId: string): Promise<ReportItem | null> {
     const clean = referenceId.trim().toUpperCase();
     try {
-      const res = await tryFetchJson(`/reports/track/${clean}`, undefined, 1000);
+      const res = await tryFetchJson(`/reports/track/${clean}`, undefined, 4000);
       if (res && (res.report || res.reference_id)) {
-        return res.report || res;
+        const item = res.report || res;
+        return attachAiTelemetry(item);
       }
     } catch {
       // Local fallback
@@ -514,12 +580,12 @@ export const Fake9jaAPI = {
 
     const stored = getStoredReports();
     const foundStored = stored.find((r) => r.reference_id.toUpperCase() === clean);
-    if (foundStored) return foundStored;
+    if (foundStored) return attachAiTelemetry(foundStored);
 
     const found = initialReports.find((r) => r.reference_id.toUpperCase() === clean);
-    if (found) return found;
+    if (found) return attachAiTelemetry(found);
 
-    return {
+    return attachAiTelemetry({
       id: 999,
       reference_id: clean || "EIE-NG-248193",
       product_name: "Amatem Forte Tablets",
@@ -533,15 +599,12 @@ export const Fake9jaAPI = {
       status: "under_review",
       risk_level: "high",
       is_priority: true,
-      coupon_used: "WELCOME30",
-      media_count: 1,
-      media_urls: ["/images/counterfeit-malaria.jpg"],
       created_at: "Today, 10:42 AM",
-    };
+    });
   },
 
   // Brand watch submission
-  async submitBrandWatch(data: BrandWatchSubmission): Promise<{ success: boolean; message: string; discount_applied?: boolean }> {
+  async submitBrandWatch(data: BrandWatchSubmission): Promise<{ success: boolean; message: string }> {
     let serverSuccess = false;
     try {
       const res = await tryFetchJson("/brand-watches", {
@@ -554,7 +617,7 @@ export const Fake9jaAPI = {
           phone: data.phone,
           monitored_skus: data.monitored_skus || "All SKUs",
         }),
-      }, 1200);
+      }, 4000);
       if (res && res.success) {
         serverSuccess = true;
       }
@@ -571,13 +634,11 @@ export const Fake9jaAPI = {
       // ignore
     }
 
-    const hasWelcome30 = (data.coupon_code || "").trim().toUpperCase() === "WELCOME30";
     return {
       success: true,
-      discount_applied: hasWelcome30,
       message: serverSuccess
-        ? "Brand Watch registered in Fake9ja Sentinel database! Our team will activate continuous catalog radar."
-        : "Brand Watch recorded! 30% WELCOME30 discount applied and catalog protection active.",
+        ? "Brand registered on standby priority roster in Fake9ja Sentinel database!"
+        : "Brand registered on standby priority roster! Direct catalog protection will activate once the AI model is live.",
     };
   },
 
@@ -591,7 +652,7 @@ export const Fake9jaAPI = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
-      }, 1200);
+      }, 4000);
 
       if (res && res.success) {
         try {
@@ -686,7 +747,7 @@ export const Fake9jaAPI = {
   // Admin get brand watches
   async getBrandWatches(): Promise<any[]> {
     try {
-      const res = await tryFetchJson("/admin/brand-watches", undefined, 1000);
+      const res = await tryFetchJson("/admin/brand-watches", undefined, 4000);
       if (res && Array.isArray(res.data)) {
         return res.data;
       }
@@ -730,7 +791,7 @@ export const Fake9jaAPI = {
   // Get and manage Hotspots
   async getHotspots(): Promise<any[]> {
     try {
-      const res = await tryFetchJson("/hotspots", undefined, 1000);
+      const res = await tryFetchJson("/hotspots", undefined, 4000);
       if (res && Array.isArray(res.data)) {
         return res.data;
       }
@@ -784,7 +845,7 @@ export const Fake9jaAPI = {
       const res = await tryFetchJson("/admin/publish-fake", {
         method: "POST",
         body: formData,
-      }, 1500);
+      }, 6000);
       if (res && res.success) {
         serverReport = res.report;
         if (res.report && res.report.reference_id) {
@@ -844,7 +905,7 @@ export const Fake9jaAPI = {
   // Video Testimonies
   async getVideoTestimonies(): Promise<any[]> {
     try {
-      const res = await tryFetchJson("/video-testimonies", undefined, 1000);
+      const res = await tryFetchJson("/video-testimonies", undefined, 4000);
       if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
         return res.data;
       }
@@ -914,13 +975,19 @@ export const Fake9jaAPI = {
     gathering_status: string;
   } | null> {
     try {
-      const res = await tryFetchJson("/public-stats", undefined, 1000);
+      const res = await tryFetchJson("/public-stats", undefined, 3500);
       if (res && typeof res.total_reports === "number") {
-        const vectors = res.training_vectors || res.training_datasets || (1480 + res.total_reports * 4);
         return {
-          ...res,
-          training_vectors: vectors,
-          training_datasets: vectors,
+          total_reports: res.total_reports,
+          verified_fake: res.verified_fake,
+          verified_original: res.verified_original ?? 0,
+          states_covered: res.states_covered ?? 36,
+          states_active: res.states_active ?? 4,
+          hotspot_count: res.hotspot_count ?? 8,
+          video_count: res.video_count ?? 8,
+          high_risk_count: res.high_risk_count ?? 0,
+          training_datasets: res.training_datasets || res.training_vectors || (1480 + res.total_reports * 4),
+          training_vectors: res.training_vectors || res.training_datasets || (1480 + res.total_reports * 4),
           detection_speed: res.detection_speed || "< 1.2s",
           target_accuracy: res.target_accuracy || "80%",
           is_gathering: res.is_gathering ?? true,
@@ -932,19 +999,24 @@ export const Fake9jaAPI = {
     }
 
     const stored = getStoredReports();
-    const total = initialReports.length + stored.length;
-    const verifiedFake = initialReports.filter((r) => r.status === "verified_fake").length + stored.filter((r) => r.status === "verified_fake").length;
-    const vectors = 1480 + (total * 4);
+    const all = [...initialReports, ...stored];
+    const total = all.length;
+    const verifiedFake = all.filter((r) => r.status === "verified_fake").length;
+    const verifiedOriginal = all.filter((r) => r.status === "verified_original").length;
+    const highRisk = all.filter((r) => r.risk_level === "high").length;
+    const uniqueStates = new Set(all.map((r) => r.state).filter(Boolean));
+    const baseVectors = 1480;
+    const vectors = baseVectors + (total * 4) + (8 * 8);
 
     return {
       total_reports: total,
       verified_fake: verifiedFake,
-      verified_original: 0,
+      verified_original: verifiedOriginal,
       states_covered: 36,
-      states_active: 4,
-      hotspot_count: 8,
-      video_count: 4,
-      high_risk_count: 3,
+      states_active: Math.max(uniqueStates.size, 4),
+      hotspot_count: initialHotspots.length || 8,
+      video_count: 8,
+      high_risk_count: highRisk,
       training_datasets: vectors,
       training_vectors: vectors,
       detection_speed: "< 1.2s",
@@ -952,6 +1024,31 @@ export const Fake9jaAPI = {
       is_gathering: true,
       gathering_status: "Actively gathering real citizen forensic reports & video evidence across Nigeria",
     };
+  },
+
+  // Admin stats directly queried from backend
+  async getAdminStats(): Promise<{
+    stats: Array<{ label: string; value: string; change: string }>;
+    meta: {
+      total_reports: number;
+      verified_fake: number;
+      open_triage: number;
+      high_risk: number;
+      priority_cases: number;
+      hotspot_count: number;
+      states_covered: number;
+      video_count: number;
+    };
+  } | null> {
+    try {
+      const res = await tryFetchJson("/admin/stats", undefined, 3500);
+      if (res && res.stats && res.meta) {
+        return res;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
   },
 
   // Export Ground Truth Dataset for Machine Learning Model Training

@@ -116,8 +116,8 @@ function ReportPage() {
     fd.append("issue", form.issue);
     fd.append("details", form.details || "");
     fd.append("contact", form.contact || "");
-    fd.append("is_anonymous", (!form.contact).toString());
-    fd.append("is_priority", "false");
+    fd.append("is_anonymous", !form.contact ? "1" : "0");
+    fd.append("is_priority", "0");
 
     files.forEach((f) => fd.append("files[]", f));
 
@@ -231,20 +231,18 @@ function ReportPage() {
             </div>
 
             <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 py-8 sm:px-8">
-              {/* Consumer Vigilance Advisory Banner */}
-              <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
-                <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
-                  <ShieldAlert className="size-4" /> Consumer Vigilance Reminder
+              {/* Consumer Vigilance Tip on Step 0 */}
+              {step === 0 && (
+                <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-3.5 text-xs">
+                  <div className="flex items-center gap-2 font-semibold text-amber-600 dark:text-amber-400">
+                    <ShieldAlert className="size-4 shrink-0" />
+                    <span>Consumer Vigilance Reminder</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground italic">
+                    “As consumers, we must be more careful about what we buy, where we buy it from, and what we choose to overlook just because something is cheaper.”
+                  </p>
                 </div>
-                <p className="mt-1 text-[11px] leading-relaxed text-foreground italic">
-                  “As consumers, we must be more careful about what we buy, where we buy it from, and what we choose to overlook just because something is cheaper.”
-                </p>
-                <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold text-muted-foreground">
-                  <span className="bg-background/80 px-2 py-0.5 rounded border border-border">Core 1: Product Type</span>
-                  <span className="bg-background/80 px-2 py-0.5 rounded border border-border">Core 2: Purchased Location</span>
-                  <span className="bg-background/80 px-2 py-0.5 rounded border border-border">Core 3: Amount Paid for it</span>
-                </div>
-              </div>
+              )}
 
               <div className="mb-6 flex items-center justify-between text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
                 <span className="text-emerald-500">Step 0{step + 1} of 05</span>
@@ -471,12 +469,15 @@ function ReportPage() {
                         "Device overheated / battery swollen",
                         "QR code / scratch PIN unverifiable",
                         "Severe skin reaction / health issue",
-                      ].map((item) => (
+                        "Physical appearance differs from normal make, which makes it suspicious",
+                      ].map((item, idx) => (
                         <button
                           key={item}
                           type="button"
                           onClick={() => update("issue", item)}
                           className={`rounded-xl border p-3 text-left text-xs font-bold transition-all cursor-pointer ${
+                            idx === 8 ? "col-span-2" : ""
+                          } ${
                             form.issue === item
                               ? "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30"
                               : "border-border bg-card hover:border-border/80 text-foreground"
@@ -686,7 +687,7 @@ function SuccessScreen({ referenceId }: { referenceId: string }) {
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild size="default" className="rounded-xl font-bold text-xs h-10 px-5 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer shadow-sm">
-            <Link to="/track">
+            <Link to="/track" search={{ ref: submittedRef } as any}>
               Track this Report Now
             </Link>
           </Button>

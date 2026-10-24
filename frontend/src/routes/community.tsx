@@ -52,6 +52,13 @@ function Community() {
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [lightboxImg, setLightboxImg] = useState<{ src: string; title: string; ref: string } | null>(null);
+  const [stats, setStats] = useState<{
+    total_reports: number;
+    verified_fake: number;
+    hotspot_count: number;
+    states_active: number;
+  } | null>(null);
+  const [hotspotsList, setHotspotsList] = useState<any[]>([]);
 
   const loadReports = async () => {
     setLoading(true);
@@ -66,6 +73,25 @@ function Community() {
   useEffect(() => {
     loadReports();
   }, [filter]);
+
+  useEffect(() => {
+    Fake9jaAPI.getPublicStats().then((data) => {
+      if (data) {
+        setStats({
+          total_reports: data.total_reports,
+          verified_fake: data.verified_fake,
+          hotspot_count: data.hotspot_count,
+          states_active: data.states_active,
+        });
+      }
+    });
+
+    Fake9jaAPI.getHotspots().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setHotspotsList(data);
+      }
+    });
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,9 +119,21 @@ function Community() {
 
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               {[
-                ["1,480+", "Total Reports", "36 States"],
-                ["184", "Flagged This Week", "Verified Fakes"],
-                ["8 Hotspots", "High Alert", "Open Stalls"],
+                [
+                  (stats?.total_reports ?? (reports.length > 0 ? reports.length : 9)).toLocaleString(),
+                  "Total Reports",
+                  `${stats?.states_active ?? 4} States Active`,
+                ],
+                [
+                  (stats?.verified_fake ?? reports.filter((r) => r.status === "verified_fake").length).toLocaleString(),
+                  "Verified Fakes",
+                  "Confirmed Warnings",
+                ],
+                [
+                  `${stats?.hotspot_count ?? (hotspotsList.length > 0 ? hotspotsList.length : 8)} Hotspots`,
+                  "High Alert",
+                  "Tracked Markets",
+                ],
               ].map(([n, l, s]) => (
                 <div key={l} className="rounded-2xl border border-border/80 bg-card p-4 text-center shadow-xs">
                   <strong className="font-display text-xl sm:text-2xl font-extrabold text-foreground">{n}</strong>
@@ -400,27 +438,32 @@ function Community() {
           </div>
 
           <div className="space-y-3">
-            {[
-              ["Balogun Market, Lagos Island", "Lagos State", "184 reports", "up", "Cosmetics & Perfumes"],
-              ["Sabon Gari Market, Kano", "Kano State", "142 reports", "up", "Prescription Drugs & Syrups"],
-              ["Onitsha Main Market", "Anambra State", "163 reports", "up", "Automotive & Chemicals"],
-              ["Computer Village, Ikeja", "Lagos State", "119 reports", "stable", "Phone Batteries & Adapters"],
-              ["Ariaria International Market", "Abia State", "97 reports", "up", "Shoes & Designer Wear"],
-              ["Ladipo Auto Spare Parts Market", "Lagos State", "88 reports", "up", "Engine Oils & Brake Pads"],
-            ].map(([m, s, n, d, cat], i) => (
+            {(hotspotsList.length > 0
+              ? hotspotsList.slice(0, 6)
+              : [
+                  { name: "Balogun Market, Lagos Island", state: "Lagos", incident_count: 186, trend: "up", risk_level: "high" },
+                  { name: "Sabon Gari Market, Kano", state: "Kano", incident_count: 142, trend: "up", risk_level: "high" },
+                  { name: "Onitsha Main Market", state: "Anambra", incident_count: 163, trend: "up", risk_level: "high" },
+                  { name: "Computer Village, Ikeja", state: "Lagos", incident_count: 121, trend: "stable", risk_level: "medium" },
+                  { name: "Ariaria International Market, Aba", state: "Abia", incident_count: 97, trend: "up", risk_level: "high" },
+                  { name: "Ladipo Auto Spare Parts Market", state: "Lagos", incident_count: 90, trend: "up", risk_level: "high" },
+                ]
+            ).map((h: any, i: number) => (
               <div
-                key={m}
+                key={h.id || h.name}
                 className="grid grid-cols-[32px_1fr_auto_auto] items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4 text-xs backdrop-blur hover:bg-white/10 transition-colors"
               >
                 <strong className="font-display text-base font-extrabold text-emerald-400">
                   #{i + 1}
                 </strong>
                 <div>
-                  <strong className="text-white text-sm block">{m}</strong>
-                  <span className="text-[11px] text-slate-400">{s} • Primary risk: {cat}</span>
+                  <strong className="text-white text-sm block">{h.name}</strong>
+                  <span className="text-[11px] text-slate-400">
+                    {h.state} • Risk: {h.risk_level ? String(h.risk_level).toUpperCase() : "HIGH"}
+                  </span>
                 </div>
-                <span className="font-mono font-bold text-white text-xs">{n}</span>
-                {d === "up" ? (
+                <span className="font-mono font-bold text-white text-xs">{h.incident_count} reports</span>
+                {h.trend === "up" ? (
                   <span className="flex items-center text-rose-400 font-bold text-[11px]">
                     <ArrowUp className="size-3.5 mr-0.5" /> High
                   </span>

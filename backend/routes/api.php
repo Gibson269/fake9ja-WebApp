@@ -18,6 +18,7 @@ Route::get('/admin/stats', [Fake9jaController::class, 'getAdminStats']);
 Route::patch('/admin/reports/{id}/status', [Fake9jaController::class, 'updateReportStatus']);
 Route::delete('/admin/reports/{id}', [Fake9jaController::class, 'deleteReport']);
 Route::get('/admin/brand-watches', [Fake9jaController::class, 'getBrandWatches']);
+Route::post('/admin/publish-fake', [Fake9jaController::class, 'publishFakeProduct']);
 Route::post('/admin/hotspots', [Fake9jaController::class, 'storeHotspot']);
 Route::delete('/admin/hotspots/{id}', [Fake9jaController::class, 'deleteHotspot']);
 // Video Testimonies Endpoints (Multi-source: YouTube, Instagram, TikTok, Facebook, Organic)
